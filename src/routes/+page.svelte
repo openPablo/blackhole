@@ -56,14 +56,8 @@ void main() {
 			1_00_000_000_000_000_000_000_000_000,
 			new Vertex(0, 0)
 		);
-		const verticesF = blackHole.draw();
-		const buffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-		gl.bufferData(gl.ARRAY_BUFFER, verticesF, gl.STATIC_DRAW);
-		const a_position = gl.getAttribLocation(program, 'a_position');
-		gl.enableVertexAttribArray(a_position);
-		gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0);
-		gl.drawArrays(gl.TRIANGLE_FAN, 0, verticesF.length / 2);
+		blackHole.draw(gl, program);
+		
 	});
 </script>
 

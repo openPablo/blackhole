@@ -13,7 +13,7 @@ export class BlackHole {
 		this.eventHorizon = (2 * G * this.mass) / (c * c);
 	}
 
-	draw(): Float32Array<ArrayBuffer> {
+	draw(gl: WebGLRenderingContext, program: WebGLProgram): void {
 		console.log('EventHorizon: ', this.eventHorizon);
 		const vertices: number[] = [this.pos.x, this.pos.y];
 		const points = 100;
@@ -24,6 +24,13 @@ export class BlackHole {
 				Math.cos(angle) * this.eventHorizon + this.pos.y
 			);
 		}
-		return new Float32Array(vertices);
+		const verticesF = new Float32Array(vertices)
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, verticesF, gl.STATIC_DRAW);
+		const a_position = gl.getAttribLocation(program, 'a_position');
+		gl.enableVertexAttribArray(a_position);
+		gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0);
+		gl.drawArrays(gl.TRIANGLE_FAN, 0, verticesF.length / 2);
 	}
 }
