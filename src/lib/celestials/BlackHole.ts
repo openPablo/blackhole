@@ -1,5 +1,17 @@
-import { Vertex } from './Vertex.js';
+import { Vertex } from './Vertex';
 
+export var blackholeFshader = `
+precision mediump float;
+void main() {
+
+  // Set fragment color: vec4(r, g, b, alpha)
+  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}`;
+export var blackholeVshader = `
+attribute vec2 a_position;
+void main() {
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
 const c = 299792458.0;
 const G = 6.6743e-11;
 export class BlackHole {
@@ -14,7 +26,6 @@ export class BlackHole {
 	}
 
 	draw(gl: WebGLRenderingContext, program: WebGLProgram): void {
-		console.log('EventHorizon: ', this.eventHorizon);
 		const vertices: number[] = [this.pos.x, this.pos.y];
 		const points = 100;
 		for (let i = 0; i <= points; i++) {

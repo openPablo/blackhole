@@ -5,4 +5,7 @@ export class Vertex {
         this.x = x;
         this.y = y;
     }
+    getFloat32(): Float32Array {
+        return new Float32Array([this.x, this.y]);
+    }
 }
