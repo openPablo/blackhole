@@ -17,7 +17,7 @@ export class BlackHole {
 
 	draw(): THREE.Mesh {
 		this.sphere.material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-		this.sphere.geometry = new THREE.IcosahedronGeometry(this.eventHorizon, 2);
+		this.sphere.geometry = new THREE.IcosahedronGeometry(this.eventHorizon, 10);
 
 		return this.sphere;
 	}

@@ -15,7 +15,7 @@ export class Ray {
 	dphi: number;
 
 	speed = 0.01;
-	maxTrail: number = 400;
+	maxTrail: number = 200;
 	constructor(pos: THREE.Vector2, dir: THREE.Vector2, blackholeEventHorizon: number) {
 		this.pos = pos;
 		this.dir = dir;
@@ -26,7 +26,7 @@ export class Ray {
 
 		//Velocity polar positions m/s
 		this.dr = this.dir.x * Math.cos(this.phi) + this.dir.y * Math.sin(this.phi);
-		this.dphi  = ( -this.dir.x * Math.sin(this.phi) + dir.y * Math.cos(this.phi) ) / this.r;
+		this.dphi  = ( -this.dir.x * Math.sin(this.phi) + this.dir.y * Math.cos(this.phi) ) / this.r;
 
 		this.trail.push(this.pos);
 	}
@@ -34,24 +34,27 @@ export class Ray {
 	step(eventHorizon: number, dlambda: number) {
 		if (this.r  > eventHorizon){
 
+			//Update velocity, close to blackhole = faster
 			this.dr 	+= this.calcD2r(eventHorizon) * dlambda;
 			this.dphi += this.calcD2phi() * dlambda;
 
 			this.r 		+= this.dr * dlambda;
 			this.phi 	+= this.dphi * dlambda;
 
+			//Polar positions to Cartesian
 			this.pos.x = Math.cos(this.phi) * this.r;
 			this.pos.y = Math.sin(this.phi) * this.r;
+
 			this.trail.push(this.pos.clone());
 		}
 
-		//if (this.trail.length > this.maxTrail  || this.pos.x == this.dir.x) {
-		//	this.trail.shift();
-		//}
-		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
+		if (this.trail.length > this.maxTrail  || this.r  <= eventHorizon) {
+			this.trail.shift();
+		}
+		this.updateGeometry();
 	}
 	draw(): THREE.Points {
-		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
+		this.updateGeometry();
 		this.points.material = new THREE.PointsMaterial({color: 0xffffff, size: 0.02, transparent: true, opacity: 0.5});
 		return this.points;
 	}
@@ -70,5 +73,10 @@ export class Ray {
 		// d²φ/dλ² = -2(dr/dλ)(dφ/dλ)/r
 		return -2.0 * this.dr * this.dphi / this.r;
 	}
-
+	private updateGeometry() {
+		if (this.points.geometry) {
+			this.points.geometry.dispose();
+		}
+		this.points.geometry = new THREE.BufferGeometry().setFromPoints(this.trail);
+	}
 }
