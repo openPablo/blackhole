@@ -3,39 +3,48 @@ import type { BlackHole } from '$lib/celestials/BlackHole';
 
 export class Ray {
 	pos: THREE.Vector2
-	direction: THREE.Vector2;
+	dir: THREE.Vector2;
 	points: THREE.Points = new THREE.Points();
 	private trail: THREE.Vector2[] = [];
 
-	//polar coords
+	//polar positions
 	r: number;
-	dr: number = 1;
-	phi: number = 1;
-	dphi: number =1;
-	blackholeEventHorizon: number;
+	dr: number;
+	//Velocity polar pos
+	phi: number;
+	dphi: number;
 
-	speed = 0.02;
+	speed = 0.002;
 	maxTrail: number = 50;
-	constructor(pos: THREE.Vector2, direction: THREE.Vector2, blackholeEventHorizon: number) {
+	constructor(pos: THREE.Vector2, dir: THREE.Vector2, blackholeEventHorizon: number) {
 		this.pos = pos;
-		this.direction = direction;
-		this.blackholeEventHorizon= blackholeEventHorizon;
+		this.dir = dir;
+
+		//Distance quotation
 		this.r = this.pos.length()
 		this.phi = Math.atan2(this.pos.y, this.pos.x);
 
+		//Velocity polar positions m/s
+		this.dr = this.dir.x * Math.cos(this.phi) + this.dir.y * Math.sin(this.phi);
+		this.dphi  = ( -this.dir.x * Math.sin(this.phi) + dir.y * Math.cos(this.phi) ) / this.r;
+
+		this.trail.push(this.pos);
 	}
 
-	step() {
-		this.trail.push(new THREE.Vector2(this.pos.x, this.pos.y));
-		this.r = this.pos.length()
-		this.phi = Math.atan2(this.pos.y, this.pos.x);
+	step(eventHorizon: number, dlambda: number) {
+		if (this.r  > eventHorizon){
+
+			this.r += this.dr * dlambda;
+			this.phi += this.dphi * dlambda;
 
 
-		if(this.r > this.blackholeEventHorizon) {
-			this.pos.add(this.direction.clone().multiplyScalar(this.speed));
+
+			this.pos.x = Math.cos(this.phi) * this.r;
+			this.pos.y = Math.sin(this.phi) * this.r;
+			this.trail.push(this.pos);
 		}
 
-		if (this.trail.length > this.maxTrail  || this.pos.x == this.direction.x) {
+		if (this.trail.length > this.maxTrail  || this.pos.x == this.dir.x) {
 			this.trail.shift();
 		}
 		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
@@ -49,10 +58,10 @@ export class Ray {
 	//https://en.wikipedia.org/wiki/Geodesics_in_general_relativity
 	//Calculate shortest path from A to B in a spacetime grid
 	//Derived geodisc quotation
-	geodisc(): void {
+	geodisc(eventHorizon: number): void {
 
 		//rate of how much closer ray gets to blackhole
-		this.dr += this.r * this.dphi * this.dphi - (this.speed*this.speed * this.blackholeEventHorizon) / (2.0 * this.r * this.r);
+		this.dr += this.r * this.dphi * this.dphi - (this.speed*this.speed * eventHorizon) / (2.0 * this.r * this.r);
 		//How fast does the angle change relative to the blackhole
 		this.dphi = -2.0 * this.dr * this.dphi / this.r;
 	}

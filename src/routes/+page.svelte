@@ -19,7 +19,7 @@
 		container.appendChild(renderer.domElement);
 
 		const blackHole: BlackHole = new BlackHole(
-			1_000_000_000_000_000_000_000_000_000,
+			100_000_000_000_000_000_000_000_000,
 			new THREE.Vector2(0, 0)
 		);
 		const rays: Ray[] = []
@@ -33,7 +33,10 @@
 		camera.position.z = 5;
 		function animate() {
 			blackHole.step();
-			rays.forEach((ray) => ray.step())
+			rays.forEach((ray) => {
+				ray.geodisc(blackHole.eventHorizon)
+				ray.step(blackHole.eventHorizon, 0.01)
+			})
 			renderer.render(scene, camera);
 		}
 		renderer.setAnimationLoop(animate);
