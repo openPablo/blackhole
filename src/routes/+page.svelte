@@ -1,66 +1,43 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { BlackHole, blackholeVshader, blackholeFshader } from '$lib/celestials/BlackHole';
-	import { Ray, rayVshader, rayFshader } from '$lib/celestials/Ray';
-	import { Vertex } from '$lib/celestials/Vertex';
+	import { BlackHole } from '$lib/celestials/BlackHole';
+	import { Ray } from '$lib/celestials/Ray';
+	import * as THREE from 'three';
 
-	let canvas: HTMLCanvasElement;
-	let gl: WebGLRenderingContext;
-
+	let container: HTMLDivElement;
 	onMount(() => {
-		gl = canvas.getContext('webgl')!;
+		const scene = new THREE.Scene();
+		const camera = new THREE.PerspectiveCamera(
+			75,
+			window.innerWidth / window.innerHeight,
+			0.1,
+			1000
+		);
 
-		var blackholeProgram = createProgram(gl, blackholeVshader, blackholeFshader);
-		var rayProgram = createProgram(gl, rayVshader, rayFshader);
+		const renderer = new THREE.WebGLRenderer();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		container.appendChild(renderer.domElement);
 
 		const blackHole: BlackHole = new BlackHole(
-			1_00_000_000_000_000_000_000_000_000,
-			new Vertex(0, 0)
+			1_000_000_000_000_000_000_000_000_000,
+			new THREE.Vector2(0, 0)
 		);
-		const ray: Ray = new Ray(new Vertex(-1, 0), new Vertex(1, 0));
-
-		// Clear the canvas and set bg black
-		gl.clearColor(0.0, 0.0, 0.0, 1.0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
-
-		function loop() {
-			gl.useProgram(blackholeProgram);
-			blackHole.draw(gl, blackholeProgram);
-			gl.useProgram(rayProgram);
-			ray.draw(gl,rayProgram);
-			ray.step();
-			requestAnimationFrame(loop);
+		const rays: Ray[] = []
+		for(let i = -5; i < 5; i += 0.5) {
+			const ray: Ray = new Ray(new THREE.Vector2(-3, i), new THREE.Vector2(1, 0), blackHole.eventHorizon);
+			scene.add(ray.draw());
+			rays.push(ray)
 		}
+		scene.add(blackHole.draw());
 
-		requestAnimationFrame(loop);
+		camera.position.z = 5;
+		function animate() {
+			blackHole.step();
+			rays.forEach((ray) => ray.step())
+			renderer.render(scene, camera);
+		}
+		renderer.setAnimationLoop(animate);
 	});
-
-	function createProgram(
-		gl: WebGLRenderingContext,
-		vshader: string,
-		fshader: string
-	): WebGLProgram {
-		// Compile shaders
-		var vs = gl.createShader(gl.VERTEX_SHADER)!;
-		gl.shaderSource(vs, vshader);
-		gl.compileShader(vs);
-
-		var fs = gl.createShader(gl.FRAGMENT_SHADER)!;
-		gl.shaderSource(fs, fshader);
-		gl.compileShader(fs);
-
-		var program = gl.createProgram();
-		gl.attachShader(program, vs);
-		gl.attachShader(program, fs);
-		gl.linkProgram(program);
-		return program;
-	}
 </script>
 
-<canvas bind:this={canvas} width="1000" height="1000" style="display:block;margin:auto;"></canvas>
-
-<style>
-	canvas {
-		background: #111;
-	}
-</style>
+<div bind:this={container} class="w-full h-full fixed top-0 left-0"></div>

@@ -1,70 +1,60 @@
-import { Vertex } from './Vertex';
-
-export var rayFshader = `
-precision mediump float;
-varying float v_alpha;
-
-void main() {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, v_alpha);
-}
-`;
-
-export var rayVshader = `
-attribute vec2 a_position;
-attribute float a_alpha;
-varying float v_alpha;
-
-void main() {
-    v_alpha = a_alpha;
-    gl_PointSize = 5.0;
-    gl_Position = vec4(a_position, 1.0);
-}
-`;
-
+import * as THREE from 'three';
+import type { BlackHole } from '$lib/celestials/BlackHole';
 
 export class Ray {
-	pos: Vertex;
-	direction: Vertex;
-	speed = 0.01;
-    trail: number[] = [];
+	pos: THREE.Vector2
+	direction: THREE.Vector2;
+	points: THREE.Points = new THREE.Points();
+	private trail: THREE.Vector2[] = [];
 
-	constructor(pos: Vertex, direction: Vertex) {
+	//polar coords
+	r: number;
+	dr: number = 1;
+	phi: number = 1;
+	dphi: number =1;
+	blackholeEventHorizon: number;
+
+	speed = 0.02;
+	maxTrail: number = 50;
+	constructor(pos: THREE.Vector2, direction: THREE.Vector2, blackholeEventHorizon: number) {
 		this.pos = pos;
 		this.direction = direction;
-        this.trail.push(this.pos.x, this.pos.y)
+		this.blackholeEventHorizon= blackholeEventHorizon;
+		this.r = this.pos.length()
+		this.phi = Math.atan2(this.pos.y, this.pos.x);
+
 	}
 
 	step() {
-		this.pos.x += this.direction.x * this.speed;
-		this.pos.y += this.direction.y * this.speed;
-        this.trail.push(this.pos.x, this.pos.y)
+		this.trail.push(new THREE.Vector2(this.pos.x, this.pos.y));
+		this.r = this.pos.length()
+		this.phi = Math.atan2(this.pos.y, this.pos.x);
+
+
+		if(this.r > this.blackholeEventHorizon) {
+			this.pos.add(this.direction.clone().multiplyScalar(this.speed));
+		}
+
+		if (this.trail.length > this.maxTrail  || this.pos.x == this.direction.x) {
+			this.trail.shift();
+		}
+		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
+	}
+	draw(): THREE.Points {
+		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
+		this.points.material = new THREE.PointsMaterial({color: 0xffffff, size: 0.02, transparent: true, opacity: 0.5});
+		return this.points;
 	}
 
-	draw(gl: WebGLRenderingContext, program: WebGLProgram): void {
-        for (let i = 1; i > 0; i -= 0.1) {
-            
-        }
-		const a_position = gl.getAttribLocation(program, 'a_position');
-		const a_alpha = gl.getAttribLocation(program, 'a_alpha');
+	//https://en.wikipedia.org/wiki/Geodesics_in_general_relativity
+	//Calculate shortest path from A to B in a spacetime grid
+	//Derived geodisc quotation
+	geodisc(): void {
 
-		const buffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        for (var i = this.trail.length; this.trail.length)
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.trail), gl.STATIC_DRAW);
-
-
-		const stride = 3 * 4;
-		gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, stride, 0);
-		gl.enableVertexAttribArray(a_position);
-
-		gl.vertexAttribPointer(a_alpha, 1, gl.FLOAT, false, stride, 8);
-		gl.enableVertexAttribArray(a_alpha);
-
-
-		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-        
-		gl.drawArrays(gl.POINTS, 0, this.trail.length / 3);
-		gl.disable(gl.BLEND);
+		//rate of how much closer ray gets to blackhole
+		this.dr += this.r * this.dphi * this.dphi - (this.speed*this.speed * this.blackholeEventHorizon) / (2.0 * this.r * this.r);
+		//How fast does the angle change relative to the blackhole
+		this.dphi = -2.0 * this.dr * this.dphi / this.r;
 	}
+
 }
