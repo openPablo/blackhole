@@ -33,7 +33,7 @@
 		camera.position.z = 5;
 		function animate() {
 			rays.forEach((ray) => {
-				ray.step(blackHole.eventHorizon, 0.01)
+				ray.step(blackHole.eventHorizon)
 			})
 			renderer.render(scene, camera);
 		}
