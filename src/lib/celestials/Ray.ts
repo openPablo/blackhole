@@ -14,8 +14,8 @@ export class Ray {
 	phi: number;
 	dphi: number;
 
-	speed = 0.002;
-	maxTrail: number = 50;
+	speed = 0.01;
+	maxTrail: number = 400;
 	constructor(pos: THREE.Vector2, dir: THREE.Vector2, blackholeEventHorizon: number) {
 		this.pos = pos;
 		this.dir = dir;
@@ -34,19 +34,20 @@ export class Ray {
 	step(eventHorizon: number, dlambda: number) {
 		if (this.r  > eventHorizon){
 
-			this.r += this.dr * dlambda;
-			this.phi += this.dphi * dlambda;
+			this.dr 	+= this.calcD2r(eventHorizon) * dlambda;
+			this.dphi += this.calcD2phi() * dlambda;
 
-
+			this.r 		+= this.dr * dlambda;
+			this.phi 	+= this.dphi * dlambda;
 
 			this.pos.x = Math.cos(this.phi) * this.r;
 			this.pos.y = Math.sin(this.phi) * this.r;
-			this.trail.push(this.pos);
+			this.trail.push(this.pos.clone());
 		}
 
-		if (this.trail.length > this.maxTrail  || this.pos.x == this.dir.x) {
-			this.trail.shift();
-		}
+		//if (this.trail.length > this.maxTrail  || this.pos.x == this.dir.x) {
+		//	this.trail.shift();
+		//}
 		this.points.geometry = new THREE.BufferGeometry().setFromPoints( this.trail );
 	}
 	draw(): THREE.Points {
@@ -55,15 +56,19 @@ export class Ray {
 		return this.points;
 	}
 
-	//https://en.wikipedia.org/wiki/Geodesics_in_general_relativity
-	//Calculate shortest path from A to B in a spacetime grid
-	//Derived geodisc quotation
-	geodisc(eventHorizon: number): void {
+	// Calculate second derivative of r (radial acceleration)
+	private calcD2r(eventHorizon: number): number {
+		// Geodesic equation for radial coordinate in Schwarzschild metric (2D approximation)
+		// d²r/dλ² = r(dφ/dλ)² - rs/(2r²) * (1 - rs/r) * c²
+		// Simplified version:
+		return this.r * this.dphi * this.dphi - (eventHorizon) / (2.0 * this.r * this.r);
+	}
 
-		//rate of how much closer ray gets to blackhole
-		this.dr += this.r * this.dphi * this.dphi - (this.speed*this.speed * eventHorizon) / (2.0 * this.r * this.r);
-		//How fast does the angle change relative to the blackhole
-		this.dphi = -2.0 * this.dr * this.dphi / this.r;
+	// Calculate second derivative of phi (angular acceleration)
+	private calcD2phi(): number {
+		// Geodesic equation for angular coordinate
+		// d²φ/dλ² = -2(dr/dλ)(dφ/dλ)/r
+		return -2.0 * this.dr * this.dphi / this.r;
 	}
 
 }

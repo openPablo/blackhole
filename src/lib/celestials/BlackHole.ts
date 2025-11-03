@@ -21,8 +21,4 @@ export class BlackHole {
 
 		return this.sphere;
 	}
-	step(): void {
-		this.sphere.rotation.x += 0.01;
-		this.sphere.rotation.y += 0.01;
-	}
 }

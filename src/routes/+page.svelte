@@ -19,12 +19,12 @@
 		container.appendChild(renderer.domElement);
 
 		const blackHole: BlackHole = new BlackHole(
-			100_000_000_000_000_000_000_000_000,
+			1000_000_000_000_000_000_000_000_000,
 			new THREE.Vector2(0, 0)
 		);
 		const rays: Ray[] = []
-		for(let i = -5; i < 5; i += 0.5) {
-			const ray: Ray = new Ray(new THREE.Vector2(-3, i), new THREE.Vector2(1, 0), blackHole.eventHorizon);
+		for(let i = -5; i < 5; i += 0.12) {
+			const ray: Ray = new Ray(new THREE.Vector2(-4, i), new THREE.Vector2(1, 0), blackHole.eventHorizon);
 			scene.add(ray.draw());
 			rays.push(ray)
 		}
@@ -32,9 +32,7 @@
 
 		camera.position.z = 5;
 		function animate() {
-			blackHole.step();
 			rays.forEach((ray) => {
-				ray.geodisc(blackHole.eventHorizon)
 				ray.step(blackHole.eventHorizon, 0.01)
 			})
 			renderer.render(scene, camera);
