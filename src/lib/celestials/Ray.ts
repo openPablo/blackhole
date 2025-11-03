@@ -85,6 +85,12 @@ export class Ray {
 		var phi = y[2];
 		var dphi = y[3];
 
+		return[
+			dr,
+			this.calcD2r(eventHorizon,r, dphi),
+			dphi,
+			this.calcD2phi(r,dr,dphi)
+		]
 	}
 	// Calculate second derivative of r (radial acceleration)
 	private calcD2r(eventHorizon: number, r: number, dphi: number): number {
