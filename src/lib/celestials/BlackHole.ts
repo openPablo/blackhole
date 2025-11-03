@@ -4,7 +4,7 @@ export var blackholeFshader = `
 precision mediump float;
 void main() {
 
-  // Set fragment color: vec4(r, g, b, alpha)
+  //Red
   gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
 }`;
 export var blackholeVshader = `
@@ -25,7 +25,9 @@ export class BlackHole {
 		this.eventHorizon = (2 * G * this.mass) / (c * c);
 	}
 
+	//draws a circle using triangles, there are no circle objects in webgl :)
 	draw(gl: WebGLRenderingContext, program: WebGLProgram): void {
+
 		const vertices: number[] = [this.pos.x, this.pos.y];
 		const points = 100;
 		for (let i = 0; i <= points; i++) {
@@ -35,7 +37,7 @@ export class BlackHole {
 				Math.cos(angle) * this.eventHorizon + this.pos.y
 			);
 		}
-		const verticesF = new Float32Array(vertices)
+		const verticesF = new Float32Array(vertices);
 		const buffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 		gl.bufferData(gl.ARRAY_BUFFER, verticesF, gl.STATIC_DRAW);
