@@ -17,8 +17,12 @@ export class BlackHole {
 
 	draw(): THREE.Mesh {
 		this.sphere.material = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
-		this.sphere.geometry = new THREE.IcosahedronGeometry(this.eventHorizon, 10);
+		this.sphere.geometry = new THREE.IcosahedronGeometry(this.eventHorizon, 2);
 
 		return this.sphere;
+	}
+	step(): void {
+		this.sphere.rotation.x += 0.01;
+		this.sphere.rotation.y += 0.01;
 	}
 }

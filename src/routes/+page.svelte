@@ -3,20 +3,23 @@
 	import { BlackHole } from '$lib/celestials/BlackHole';
 	import { Ray } from '$lib/celestials/Ray';
 	import * as THREE from 'three';
+	import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 	let container: HTMLDivElement;
+
 	onMount(() => {
 		const scene = new THREE.Scene();
+
 		const camera = new THREE.PerspectiveCamera(
 			75,
 			window.innerWidth / window.innerHeight,
 			0.1,
 			1000
 		);
-
 		const renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
+		const controls = new OrbitControls( camera, renderer.domElement );
 
 		const blackHole: BlackHole = new BlackHole(
 			1000_000_000_000_000_000_000_000_000,
@@ -33,8 +36,10 @@
 		camera.position.z = 5;
 		function animate() {
 			rays.forEach((ray) => {
-				ray.step(blackHole.eventHorizon)
+				ray.step();
 			})
+			blackHole.step();
+			controls.update();
 			renderer.render(scene, camera);
 		}
 		renderer.setAnimationLoop(animate);

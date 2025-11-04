@@ -29,7 +29,6 @@ export class Ray {
 
 
 	h: number = 0.01; //Step size
-	tolerance: number = 0.05;
 	eventHorizon: number;
 	maxTrail: number = 200;
 	constructor(pos: THREE.Vector2, dir: THREE.Vector2, blackholeEventHorizon: number) {
@@ -79,37 +78,6 @@ export class Ray {
 		return this.points;
 	}
 
-	//https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method
-	private RK45(){
-		var h = this.h
-		const y = [this.r, this.dr, this.phi, this.dphi]
-		//Coefficients are decided by Fehlberg method, see wiki 
-		const k1 = this.F(y)
-		const k2 = this.F(this.mergeRK45(y , k1, B[1][1]))
-		const k3 = this.F(this.mergeRK45(this.mergeRK45(y , k1, B[2][1]), k2, B[2][2] ))
-		const k4 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[3][1]), k2, B[3][2] ),k3, B[3][3]))
-		const k5 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[4][1]), k2, B[4][2] ),k3, B[4][3]), k4, B[4][4]))
-		const k6 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[5][1]), k2, B[5][2] ),k3, B[5][3]), k4, B[5][4]), k5, B[5][5]))
-	
-		
-	}
-	private mergeRK45(y: number[4], k: number[4], coefficient: number) {
-		return y.map((x,i) => x + k.map(x => x * coefficient)[i])
-	}
-
-	private F(y: number[]){
-		var r = y[0];
-		var dr = y[1];
-		var phi = y[2];
-		var dphi = y[3];
-
-		return[
-			dr,
-			this.calcD2r(r, dphi),
-			dphi,
-			this.calcD2phi(r,dr,dphi)
-		]
-	}
 	//calculate second derivative of r (radial acceleration)
 	private calcD2r(r: number, dphi: number): number {
 		//Geodesic equation for radial coordinate in Schwarzschild metric (2D approximation)
