@@ -16,6 +16,7 @@
 			0.1,
 			1000
 		);
+
 		const renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
@@ -23,11 +24,11 @@
 
 		const blackHole: BlackHole = new BlackHole(
 			1000_000_000_000_000_000_000_000_000,
-			new THREE.Vector2(0, 0)
+			new THREE.Vector3(0, 0)
 		);
 		const rays: Ray[] = []
 		for(let i = -5; i < 5; i += 0.12) {
-			const ray: Ray = new Ray(new THREE.Vector2(-4, i), new THREE.Vector2(1, 0), blackHole.eventHorizon);
+			const ray: Ray = new Ray(new THREE.Vector3(-4, i), new THREE.Vector3(1, 0), blackHole.eventHorizon);
 			scene.add(ray.draw());
 			rays.push(ray)
 		}
