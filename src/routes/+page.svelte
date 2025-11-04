@@ -23,7 +23,7 @@
 		const controls = new OrbitControls( camera, renderer.domElement );
 
 		const blackHole: BlackHole = new BlackHole(
-			1000_000_000_000_000_000_000_000_000,
+			500_000_000_000_000_000_000_000_000,
 			new THREE.Vector3(0, 0)
 		);
 		const rays: Ray[] = []

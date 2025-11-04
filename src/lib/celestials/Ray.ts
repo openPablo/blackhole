@@ -19,7 +19,7 @@ export class Ray {
 
 	delta: number = 0.02; //Step size
 	eventHorizon: number;
-	maxTrail: number = 200;
+	maxLength: number = 1000;
 	E: number;
 
 	constructor(pos: THREE.Vector3, dir: THREE.Vector3, blackholeEventHorizon: number) {
@@ -46,6 +46,7 @@ export class Ray {
 	}
 
 	step() {
+		if (this.trail.length >= this.maxLength) return;
 		if (this.r  > this.eventHorizon){
 			
 			//Update velocity, close to blackhole -> faster and bend more
@@ -63,10 +64,6 @@ export class Ray {
 			this.pos.z = this.r * cos(this.theta);
 
 			this.trail.push(this.pos.clone());
-		}
-
-		if (this.trail.length > this.maxTrail  || this.r  <= this.eventHorizon) {
-			this.trail.shift();
 		}
 		this.updateGeometry();
 	}
