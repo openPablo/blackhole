@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { BlackHole } from '$lib/celestials/BlackHole';
+const { sin, cos, acos, atan2 } = Math;
 
 export class Ray {
 	pos: THREE.Vector3
@@ -9,11 +9,13 @@ export class Ray {
 
 	//polar positions
 	r: number;
-	dr: number;
-	//Velocity polar pos
 	phi: number;
-	dphi: number;
+	theta: number;
 
+	//Velocity (derivative) polar pos
+	dr: number;
+	dphi: number;
+	dtheta: number;
 
 	delta: number = 0.02; //Step size
 	eventHorizon: number;
@@ -25,11 +27,16 @@ export class Ray {
 
 		//Distance quotation
 		this.r = this.pos.length()
-		this.phi = Math.atan2(this.pos.y, this.pos.x);
+		this.phi = atan2(this.pos.y, this.pos.x);
+		this.theta = acos(this.pos.z/ this.r);
 
 		//Velocity polar positions m/s
-		this.dr = this.dir.x * Math.cos(this.phi) + this.dir.y * Math.sin(this.phi);
-		this.dphi  = ( -this.dir.x * Math.sin(this.phi) + this.dir.y * Math.cos(this.phi) ) / this.r;
+		this.dr     = sin(this.theta)*cos(this.phi)*this.dir.x + sin(this.theta)*sin(this.phi)*this.dir.y + cos(this.theta)*this.dir.z;
+		this.dtheta = (cos(this.theta)*cos(this.phi)*this.dir.x + cos(this.theta)*sin(this.phi)*this.dir.y - sin(this.theta)*this.dir.z) / this.r;
+		this.dphi   = (-sin(this.phi)*this.dir.x + cos(this.phi)*this.dir.y) / (this.r * sin(this.theta));
+
+		this.dr = this.dir.x * cos(this.phi) + this.dir.y * sin(this.phi);
+		this.dphi  = ( -this.dir.x * sin(this.phi) + this.dir.y * cos(this.phi) ) / this.r;
 
 
 		this.trail.push(this.pos.clone());
@@ -46,8 +53,9 @@ export class Ray {
 			this.phi 	+= this.dphi * this.delta;
 
 			//Polar positions to Cartesian
-			this.pos.x = Math.cos(this.phi) * this.r;
-			this.pos.y = Math.sin(this.phi) * this.r;
+			this.pos.x = this.r * sin(this.theta) * cos(this.phi);
+			this.pos.y = this.r * sin(this.theta) * sin(this.phi);
+			this.pos.z = this.r * cos(this.theta);
 
 			this.trail.push(this.pos.clone());
 		}

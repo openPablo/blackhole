@@ -27,8 +27,13 @@
 			new THREE.Vector3(0, 0)
 		);
 		const rays: Ray[] = []
-		for(let i = -5; i < 5; i += 0.12) {
+		for(let i = -3; i < 3; i += 0.12) {
 			const ray: Ray = new Ray(new THREE.Vector3(-4, i), new THREE.Vector3(1, 0), blackHole.eventHorizon);
+			scene.add(ray.draw());
+			rays.push(ray)
+		}
+		for(let i = -3; i < 3; i += 0.12) {
+			const ray: Ray = new Ray(new THREE.Vector3(-4, 0, i), new THREE.Vector3(1, 0, 0), blackHole.eventHorizon);
 			scene.add(ray.draw());
 			rays.push(ray)
 		}
