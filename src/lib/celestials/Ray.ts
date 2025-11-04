@@ -1,9 +1,7 @@
 import * as THREE from 'three';
 import type { BlackHole } from '$lib/celestials/BlackHole';
 
-// Butcher Tableau coefficients for RKF45
-// This is a fixed set of constants for the method.
-
+// Butcher Tableau coefficients for RKF45 https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method
 const A = [0, 1/4, 3/8, 12/13, 1, 1/2];
 const B = [
 	[1/4],
@@ -30,13 +28,14 @@ export class Ray {
 	dphi: number;
 
 
-	dlambda: number = 0.01; //Step size
+	h: number = 0.01; //Step size
 	tolerance: number = 0.05;
-
+	eventHorizon: number;
 	maxTrail: number = 200;
 	constructor(pos: THREE.Vector2, dir: THREE.Vector2, blackholeEventHorizon: number) {
 		this.pos = pos;
 		this.dir = dir;
+		this.eventHorizon = blackholeEventHorizon;
 
 		//Distance quotation
 		this.r = this.pos.length()
@@ -46,20 +45,21 @@ export class Ray {
 		this.dr = this.dir.x * Math.cos(this.phi) + this.dir.y * Math.sin(this.phi);
 		this.dphi  = ( -this.dir.x * Math.sin(this.phi) + this.dir.y * Math.cos(this.phi) ) / this.r;
 
+
 		this.trail.push(this.pos.clone());
 	}
 
-	step(eventHorizon: number) {
-		if (this.r  > eventHorizon){
+	step() {
+		if (this.r  > this.eventHorizon){
 
-			const d2r = this.calcD2r(eventHorizon,this.r,this.dphi );
+			const d2r = this.calcD2r(this.r, this.dphi);
 			const d2phi= this.calcD2phi(this.r,this.dr,this.dphi);
 			//Update velocity, close to blackhole -> faster and bend more
-			this.dr 	+= d2r * this.dlambda;
-			this.dphi += d2phi * this.dlambda;
+			this.dr 	+= d2r * this.h;
+			this.dphi += d2phi * this.h;
 
-			this.r 		+= this.dr * this.dlambda;
-			this.phi 	+= this.dphi * this.dlambda;
+			this.r 		+= this.dr * this.h;
+			this.phi 	+= this.dphi * this.h;
 
 			//Polar positions to Cartesian
 			this.pos.x = Math.cos(this.phi) * this.r;
@@ -68,7 +68,7 @@ export class Ray {
 			this.trail.push(this.pos.clone());
 		}
 
-		if (this.trail.length > this.maxTrail  || this.r  <= eventHorizon) {
+		if (this.trail.length > this.maxTrail  || this.r  <= this.eventHorizon) {
 			this.trail.shift();
 		}
 		this.updateGeometry();
@@ -79,7 +79,25 @@ export class Ray {
 		return this.points;
 	}
 
-	private F(y: number[], eventHorizon: number){
+	//https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta%E2%80%93Fehlberg_method
+	private RK45(){
+		var h = this.h
+		const y = [this.r, this.dr, this.phi, this.dphi]
+		//Coefficients are decided by Fehlberg method, see wiki 
+		const k1 = this.F(y)
+		const k2 = this.F(this.mergeRK45(y , k1, B[1][1]))
+		const k3 = this.F(this.mergeRK45(this.mergeRK45(y , k1, B[2][1]), k2, B[2][2] ))
+		const k4 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[3][1]), k2, B[3][2] ),k3, B[3][3]))
+		const k5 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[4][1]), k2, B[4][2] ),k3, B[4][3]), k4, B[4][4]))
+		const k6 = this.F(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(this.mergeRK45(y , k1, B[5][1]), k2, B[5][2] ),k3, B[5][3]), k4, B[5][4]), k5, B[5][5]))
+	
+		
+	}
+	private mergeRK45(y: number[4], k: number[4], coefficient: number) {
+		return y.map((x,i) => x + k.map(x => x * coefficient)[i])
+	}
+
+	private F(y: number[]){
 		var r = y[0];
 		var dr = y[1];
 		var phi = y[2];
@@ -87,23 +105,24 @@ export class Ray {
 
 		return[
 			dr,
-			this.calcD2r(eventHorizon,r, dphi),
+			this.calcD2r(r, dphi),
 			dphi,
 			this.calcD2phi(r,dr,dphi)
 		]
 	}
-	// Calculate second derivative of r (radial acceleration)
-	private calcD2r(eventHorizon: number, r: number, dphi: number): number {
-		// Geodesic equation for radial coordinate in Schwarzschild metric (2D approximation)
-		// d²r/dλ² = r(dφ/dλ)² - rs/(2r²) * (1 - rs/r) * c²
-		// Simplified version:
-		return r * dphi * dphi - (eventHorizon) / (2.0 * r * r);
+	//calculate second derivative of r (radial acceleration)
+	private calcD2r(r: number, dphi: number): number {
+		//Geodesic equation for radial coordinate in Schwarzschild metric (2D approximation)
+		//d²r/dλ² = r(dφ/dλ)² - rs/(2r²) * (1 - rs/r) * c²
+		//Simplified:
+		return r * dphi * dphi - (this.eventHorizon) / (2.0 * r * r);
 	}
 
-	// Calculate second derivative of phi (angular acceleration)
+	//calculate second derivative of phi (angular acceleration)
 	private calcD2phi(r: number, dr: number, dphi: number): number {
-		// Geodesic equation for angular coordinate
-		// d²φ/dλ² = -2(dr/dλ)(dφ/dλ)/r
+		//Geodesic equation for angular coordinate
+		//d²φ/dλ² = -2(dr/dλ)(dφ/dλ)/r
+		//Simplified:
 		return -2.0 * dr * dphi / r;
 	}
 	private updateGeometry() {
