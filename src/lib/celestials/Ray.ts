@@ -59,9 +59,10 @@ export class Ray {
 
 	step() {
 		if (this.trail.length >= this.maxLength || this.r < this.eventHorizon) return;
-		let adaptiveStep =
-			this.stepSize *
-			(1 / (1 + 2 * (this.eventHorizon / Math.max(this.r - this.eventHorizon, 1e-6))));
+		let adaptiveStep = 0.02;
+		//let adaptiveStep =
+		//	this.stepSize *
+		//	(1 / (1 + 2 * (this.eventHorizon / Math.max(this.r - this.eventHorizon, 1e-6))));
 
 		//Update velocity, close to blackhole -> faster and bend more
 		this.dr += this.calcD2r() * adaptiveStep;
