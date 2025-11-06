@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { BlackHole } from '$lib/celestials/BlackHole';
-	import { Ray } from '$lib/celestials/Ray';
 	import * as THREE from 'three';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
@@ -24,7 +23,7 @@
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 			u_eventHorizon: { value: blackHole.eventHorizon},
 			u_camPos: { value: camera.position},
-			u_far: {value: 500.0}
+			u_far: {value: 100.0}
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
