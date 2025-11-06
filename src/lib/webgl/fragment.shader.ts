@@ -45,21 +45,22 @@ void main() {
   uv.x *= u_resolution.x / u_resolution.y;
 
   // Calculate ray direction from UV coordinates
-  vec3 rayDir = normalize(vec3(uv, -1.0));
-  vec3 ray    = u_camPos - rayDir * u_far;
+  vec3 ray    = u_camPos - normalize(vec3(uv, -1.0)) * u_far;
+  vec3 rayDir = normalize(vec3(uv, 1.0));
 
   // Polar coordinates = blackhole is center
   vec3 polar  = getPolarCoords(ray);
   vec3 dPolar = getPolarVelocities(polar.x, polar.y, polar.z, rayDir);
   float E = calcEnergy(polar.x, polar.z, dPolar.x, dPolar.y, dPolar.z);
 
-  vec3 color = vec3(0.0,0.0,0.0);
+  vec3 color = vec3(0.0,0.0,1.0);
 
   int i= 0;
   float step = 0.1;
-  while (i < 200) {
+  while (i < 500) {
     if(polar.x <= u_eventHorizon) {
       color = vec3(1.0,0.0,0.0);
+      break;
     }
 
     if(polar.x > 50.0 * u_eventHorizon) {

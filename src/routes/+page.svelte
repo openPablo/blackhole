@@ -18,7 +18,7 @@
 			500_000_000_000_000_000_000_000_000,
 			new THREE.Vector3(0, 0, 0)
 		);
-
+		console.log(blackHole.eventHorizon);
 		const uniforms = {
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 			u_eventHorizon: { value: blackHole.eventHorizon},
