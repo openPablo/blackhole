@@ -9,7 +9,7 @@
 
 	onMount(() => {
 		const scene = new THREE.Scene();
-		const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+		const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 0.01);
 		const renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
@@ -23,7 +23,7 @@
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 			u_eventHorizon: { value: blackHole.eventHorizon},
 			u_camPos: { value: camera.position},
-			u_far: {value: 100.0}
+			u_far: {value: 1}
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),

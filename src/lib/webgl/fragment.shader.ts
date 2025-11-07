@@ -44,11 +44,11 @@ void main() {
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
 
-  // Calculate ray direction from UV coordinates
+  // Calculate ray direction from Camera pos
   vec3 ray    = u_camPos - normalize(vec3(uv, -1.0)) * u_far;
   vec3 rayDir = normalize(vec3(uv, 1.0));
 
-  // Polar coordinates = blackhole is center
+  // Polar coordinates (blackhole is center of scene)
   vec3 polar  = getPolarCoords(ray);
   vec3 dPolar = getPolarVelocities(polar.x, polar.y, polar.z, rayDir);
   float E = calcEnergy(polar.x, polar.z, dPolar.x, dPolar.y, dPolar.z);
