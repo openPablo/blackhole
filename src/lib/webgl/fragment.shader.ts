@@ -6,7 +6,8 @@ varying vec2 vUv;
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
-uniform float u_far;
+const int nrOfStars = 20;
+uniform vec4 u_stars[nrOfStars];
 
 vec3 getPolarCoords(vec3 pos){
 	float r = length(pos);
@@ -66,6 +67,19 @@ vec3 calcSecondDerivatives(float E, vec3 polar, vec3 dPolar){
 
   return vec3(d2R, d2Phi, d2Theta);
 }
+float intersectsWithStar(float phi, float theta) {
+  for (int i = 0; i < nrOfStars; i++) {
+    float phi2 = u_stars[i].x;
+    float theta2 = u_stars[i].y;
+    float size = u_stars[i].z;
+
+    float distance = acos(sin(theta) * sin(theta2) * cos(phi-phi2) +  cos(theta) * cos(theta2) );
+    if (distance < size){
+      return u_stars[i].w;
+    }
+  }
+  return 0.0;
+}
 
 void main() {
   // Transform coords of pixel that we're drawing to match 0,0 being the center of the screen
@@ -84,14 +98,18 @@ void main() {
   vec3 color = vec3(0.0,0.0,0.5);
 
   int i= 0;
-  float step = 0.01;
+  float step = 0.005;
   while (i < 200) {
     if(polar.x <= u_eventHorizon * 1.01) {
       color = vec3(0.5,0.0,0.0);
       break;
     }
 
-    if(polar.x > 1000.0 * u_eventHorizon) {
+    if(polar.x >= 0.99999) {
+      float red = intersectsWithStar(polar.y,polar.z);
+      if (red > 0.0){
+        color = vec3(0.9,0.9,red);
+      }
       break;
     }
     
