@@ -21,9 +21,9 @@
 		console.log(blackHole.eventHorizon);
 		const uniforms = {
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-			u_eventHorizon: { value: blackHole.eventHorizon},
-			u_camPos: { value: camera.position},
-			u_far: {value: 1}
+			u_eventHorizon: { value: blackHole.eventHorizon },
+			u_camPos: { value: camera.position },
+			u_far: { value: 1 }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
