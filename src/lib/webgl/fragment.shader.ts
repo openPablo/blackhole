@@ -68,26 +68,26 @@ vec3 calcSecondDerivatives(float E, vec3 polar, vec3 dPolar){
 }
 
 void main() {
-  // Set camera 
+  // Transform coords of pixel that we're drawing to match 0,0 being the center of the screen
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
 
-  // Calculate ray direction from Camera pos
-  vec3 ray    = u_camPos - normalize(vec3(uv, -1.0)) * u_far;
-  vec3 rayDir = normalize(vec3(uv, 1.0));
+  // Calculate ray direction from Camera pos towards back of scene
+  vec3 ray    = vec3(uv, u_camPos.z);
+  vec3 rayDir = normalize(vec3(uv, -1.0));
 
   // Polar coordinates (blackhole is center of scene)
   vec3 polar  = getPolarCoords(ray);
   vec3 dPolar = getPolarVelocities(polar.x, polar.y, polar.z, rayDir);
   float E = calcEnergy(polar.x, polar.z, dPolar.x, dPolar.y, dPolar.z);
 
-  vec3 color = vec3(1.0,0.0,0.0);
+  vec3 color = vec3(0.0,0.0,0.5);
 
   int i= 0;
   float step = 0.01;
   while (i < 200) {
     if(polar.x <= u_eventHorizon * 1.01) {
-      color = vec3(0.0,0.0,0.5);
+      color = vec3(0.5,0.0,0.0);
       break;
     }
 
