@@ -6,6 +6,10 @@ varying vec2 vUv;
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
+uniform vec3 u_camRight;
+uniform vec3 u_camUp;
+uniform vec3 u_camForward;
+
 const int nrOfStars = 20;
 uniform vec4 u_stars[nrOfStars];
 
@@ -85,17 +89,21 @@ void main() {
   // Transform coords of pixel that we're drawing to match 0,0 being the center of the screen
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
+  vec3 ray = u_camPos;
+  // Camera-correct ray
+  vec3 rayDir = normalize(
+    uv.x * u_camRight +
+    uv.y * u_camUp +
+    u_camForward
+  );
 
-  // Calculate ray direction from Camera pos towards back of scene
-  vec3 ray    = vec3(uv, u_camPos.z);
-  vec3 rayDir = normalize(vec3(uv, -1.0));
 
   // Polar coordinates (blackhole is center of scene)
   vec3 polar  = getPolarCoords(ray);
   vec3 dPolar = getPolarVelocities(polar.x, polar.y, polar.z, rayDir);
   float E = calcEnergy(polar.x, polar.z, dPolar.x, dPolar.y, dPolar.z);
 
-  vec3 color = vec3(0.0,0.0,0.5);
+  vec3 color = vec3(0.0,0.0,0.1);
 
   int i= 0;
   float step = 0.005;
@@ -105,7 +113,7 @@ void main() {
       break;
     }
 
-    if(polar.x >= 0.99999) {
+    if(polar.x >= 0.995 && polar.x <= 1.005) {
       float red = intersectsWithStar(polar.y,polar.z);
       if (red > 0.0){
         color = vec3(0.9,0.9,red);
