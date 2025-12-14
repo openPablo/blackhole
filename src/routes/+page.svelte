@@ -7,9 +7,6 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 	let container: HTMLDivElement;
-	const right = new THREE.Vector3();
-	const up = new THREE.Vector3();
-	const forward = new THREE.Vector3();
 	onMount(() => {
 		const scene = new THREE.Scene();
 
@@ -18,12 +15,7 @@
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
 
-		const camera = new THREE.PerspectiveCamera(
-			75,
-			window.innerWidth / window.innerHeight,
-			0.1,
-			1000
-		);
+		const camera = new THREE.Camera();
 		camera.position.set(0, 0, -0.9);
 		const controls = new OrbitControls(camera, renderer.domElement);
 		controls.autoRotate = true;
@@ -40,10 +32,8 @@
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 			u_eventHorizon: { value: blackHole.eventHorizon },
 			u_stars: { value: blackHole.generateConsellation(20) },
-			u_camPos: { value: camera.position },
-			u_camRight: { value: right },
-			u_camUp: { value: up },
-			u_camForward: { value: forward }
+			u_camPos: { value: new THREE.Vector3() },
+			u_viewMatrix: { value: new THREE.Matrix4() }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
@@ -59,13 +49,8 @@
 			controls.update();
 			camera.updateMatrixWorld();
 			uniforms.u_camPos.value.copy(camera.position);
+			uniforms.u_viewMatrix.value.copy(camera.matrix);
 
-			camera.matrixWorld.extractBasis(right, up, forward);
-			forward.negate();
-
-			uniforms.u_camRight.value.copy(right);
-			uniforms.u_camUp.value.copy(up);
-			uniforms.u_camForward.value.copy(forward);
 			requestAnimationFrame(animate);
 			renderer.render(scene, orthoCamera);
 		}

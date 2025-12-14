@@ -6,9 +6,7 @@ varying vec2 vUv;
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
-uniform vec3 u_camRight;
-uniform vec3 u_camUp;
-uniform vec3 u_camForward;
+uniform mat4 u_viewMatrix;
 
 const int nrOfStars = 20;
 uniform vec4 u_stars[nrOfStars];
@@ -89,14 +87,11 @@ void main() {
   // Transform coords of pixel that we're drawing to match 0,0 being the center of the screen
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
-  vec3 ray = u_camPos;
-  // Camera-correct ray
-  vec3 rayDir = normalize(
-    uv.x * u_camRight +
-    uv.y * u_camUp +
-    u_camForward
-  );
 
+  // Rotate local view vector by the camera matrix
+  // holy shit it took me way too long to figure this part
+  vec3 ray = u_camPos; 
+  vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
 
   // Polar coordinates (blackhole is center of scene)
   vec3 polar  = getPolarCoords(ray);
@@ -107,7 +102,7 @@ void main() {
 
   int i= 0;
   float step = 0.005;
-  while (i < 200) {
+  while (i < 400) {
     if(polar.x <= u_eventHorizon * 1.01) {
       color = vec3(0.5,0.0,0.0);
       break;
