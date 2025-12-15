@@ -60,12 +60,9 @@ vec3 calcSecondDerivatives(float E, vec3 polar, vec3 dPolar){
 				      (dtheta * dtheta + sin(theta) * sin(theta) * dphi * dphi);
 
   // Angular acceleration
-  float d2Phi = -(2.0 / r) * dr * dphi -
-			          ((2.0 * cos(theta)) / sin(theta)) * dtheta * dphi;
+  float d2Phi = -2.0 * dr * dphi / r - 2.0 * cos(theta) * dtheta * dphi / sin(theta);
 
-  float d2Theta = -(2.0 / r) * dr * dtheta +
-			            sin(theta) * cos(theta) * dphi * dphi;
-
+  float d2Theta = -(2.0 / r) * dr * dtheta + sin(theta) * cos(theta) * dphi * dphi;
 
   return vec3(d2R, d2Phi, d2Theta);
 }
@@ -88,8 +85,9 @@ void main() {
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
 
-  // Rotate local view vector by the camera matrix
   // holy shit it took me way too long to figure this part
+  // uv are the coordinates of the pixel on the screen, which we're drawing with a quad tex.
+  // transform these uv coordinates to the viewmatrix, which is what the camera is pointing to
   vec3 ray = u_camPos; 
   vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
 
@@ -102,7 +100,7 @@ void main() {
 
   int i= 0;
   float step = 0.005;
-  while (i < 400) {
+  while (i < 400 && polar.x <= 1.01) {
     if(polar.x <= u_eventHorizon * 1.01) {
       color = vec3(0.5,0.0,0.0);
       break;
