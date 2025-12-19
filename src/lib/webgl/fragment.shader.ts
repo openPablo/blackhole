@@ -13,9 +13,19 @@ uniform vec4 u_stars[nrOfStars];
 
 vec3 getPolarCoords(vec3 pos){
 	float r = length(pos);
-	float phi = atan(pos.y, pos.x);
-	float theta = acos(pos.z / r);
-  return vec3(r, phi, theta);
+  return vec3(
+    r,                  //r
+    atan(pos.y, pos.x), //phi
+    acos(pos.z / r)     //theta
+  );
+}
+
+vec3 getCartesianCoords(vec3 polar) {
+  return vec3(
+    polar.x * sin(polar.z) * cos(polar.y), //x
+    polar.x * sin(polar.z) * sin(polar.y), //y
+    polar.x * cos(polar.z)                 //z
+  );
 }
 
 vec3 getPolarVelocities(float r, float phi, float theta, vec3 dir){
@@ -66,6 +76,7 @@ vec3 calcSecondDerivatives(float E, vec3 polar, vec3 dPolar){
 
   return vec3(d2R, d2Phi, d2Theta);
 }
+
 float intersectsWithStar(float phi, float theta) {
   for (int i = 0; i < nrOfStars; i++) {
     float phi2 = u_stars[i].x;
@@ -91,21 +102,43 @@ void main() {
   vec3 ray = u_camPos; 
   vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
 
-  // Polar coordinates (blackhole is center of scene)
-  vec3 polar  = getPolarCoords(ray);
-  vec3 dPolar = getPolarVelocities(polar.x, polar.y, polar.z, rayDir);
-  float E = calcEnergy(polar.x, polar.z, dPolar.x, dPolar.y, dPolar.z);
+// 1. Define the orbital plane basis
+  vec3 e1 = normalize(ray); 
+  vec3 e2 = normalize(rayDir - dot(rayDir, e1) * e1);
 
-  vec3 color = vec3(0.0,0.0,0.1);
+  // 2. Initial conditions for u = 1/r
+  float r = length(ray);
+  float u = 1.0 / r;
+  
+  // Angular momentum / Impact parameter logic
+  // du/dphi = - (dr/dphi) / r^2
+  float dr_ds = dot(rayDir, e1);
+  float rdphi_ds = dot(rayDir, e2);
+  float du = - (dr_ds / rdphi_ds) * u;
 
-  int i= 0;
-  float step = 0.005;
-  while (i < 400 && polar.x <= 1.01) {
-    if(polar.x <= u_eventHorizon * 1.01) {
-      color = vec3(0.5,0.0,0.0);
+  float phi = 0.0;
+  float step = 0.05; 
+  vec3 color = vec3(0.0, 0.0, 0.1);
+
+  // 3. Integration loop
+  for (int i = 0; i < 400; i++) {
+    // Schwarzschild geodesic equation for light: d2u/dphi2 + u = 1.5 * rs * u^2
+    float d2u = -u + 1.5 * u_eventHorizon * u * u;
+    
+    u += du * step;
+    du += d2u * step;
+    phi += step;
+
+    ray = (cos(phi) * e1 + sin(phi) * e2) * 1.0 / u;
+
+    if (u > 1.0 / u_eventHorizon) {
+      color = vec3(0.0); // Event Horizon
       break;
     }
-
+    if (u <= 0.0) {
+      color = vec3(0.1, 0.1, 0.2); // Escape to infinity
+      break;
+    }
     if(polar.x >= 0.995 && polar.x <= 1.005) {
       float red = intersectsWithStar(polar.y,polar.z);
       if (red > 0.0){
@@ -113,12 +146,7 @@ void main() {
       }
       break;
     }
-    
-    dPolar  += calcSecondDerivatives(E, polar, dPolar) * step;
-    polar   += dPolar * step;
-    i++;
   }
-
   gl_FragColor = vec4(color, 1.0);
 }
 `;
