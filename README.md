@@ -12,8 +12,8 @@ npm run dev
 I was inspired by this super interesting youtube video, in which the OP created a blackhole simulation using C++ and openGL.
 https://www.youtube.com/watch?v=8-B6ryuBkCM (great channel!)
 
-
-So I decided to give it a go and try to implement a blackhole efficient enough, that it could be ran in the browser.
-
-I learned Threejs/webGL through this exercise :).
-
+- No runge-kutta method
+- 2d geodesic instead of 3d
+- use WebGL instead of openGL
+- put all raytracing code in the fragment shader
+- raytrace from the camera PoV instead of the back

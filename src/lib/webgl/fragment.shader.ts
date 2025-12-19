@@ -3,13 +3,19 @@ precision highp float;
 
 varying vec2 vUv;
 
+struct Planet {
+  float radius;  
+  vec3 pos;
+  vec3 color;  
+};
+const int nrOfPlanets = 20;
+
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
+uniform Planet u_planets[nrOfPlanets];
 
-const int nrOfStars = 20;
-uniform vec4 u_stars[nrOfStars];
 
 vec3 getPolarCoords(vec3 pos){
 	float r = length(pos);
@@ -26,55 +32,6 @@ vec3 getCartesianCoords(vec3 polar) {
     polar.x * sin(polar.z) * sin(polar.y), //y
     polar.x * cos(polar.z)                 //z
   );
-}
-
-vec3 getPolarVelocities(float r, float phi, float theta, vec3 dir){
-  float dr = sin(theta) * cos(phi) * dir.x +
-           sin(theta) * sin(phi) * dir.y +
-           cos(theta) * dir.z;
-
-  float dtheta = (cos(theta) * cos(phi) * dir.x +
-                cos(theta) * sin(phi) * dir.y -
-                sin(theta) * dir.z) / r;
-
-  float dphi = (-sin(phi) * dir.x + cos(phi) * dir.y) / (r * sin(theta));
-  return vec3(dr, dphi, dtheta);
-}
-
-float calcEnergy(float r, float theta, float dr, float dphi,float dtheta) {
-    float f = 1.0 - u_eventHorizon / r;
-    float dt_dlambda = sqrt(
-        (dr * dr) / f +
-        r * r * dtheta * dtheta +
-        r * r * sin(theta) * sin(theta) * dphi * dphi
-    );
-    float E = f * dt_dlambda;
-    return E;
-}
-
-vec3 calcSecondDerivatives(float E, vec3 polar, vec3 dPolar){
-  // unpack vec3's to more readable vars
-  float r     = polar.x;
-  float phi   = polar.y;
-  float theta = polar.z;
-  float dr      = dPolar.x;
-  float dphi    = dPolar.y;
-  float dtheta  = dPolar.z;
-
-  float f = 1.0 - u_eventHorizon / r;
-  float dt_dlambda = E / f;
-
-  // Radial acceleration
-  float d2R = -(u_eventHorizon / (2.0 * r * r)) * f * dt_dlambda * dt_dlambda +
-			        (u_eventHorizon / (2.0 * r * r * f)) * dr * dr + r *
-				      (dtheta * dtheta + sin(theta) * sin(theta) * dphi * dphi);
-
-  // Angular acceleration
-  float d2Phi = -2.0 * dr * dphi / r - 2.0 * cos(theta) * dtheta * dphi / sin(theta);
-
-  float d2Theta = -(2.0 / r) * dr * dtheta + sin(theta) * cos(theta) * dphi * dphi;
-
-  return vec3(d2R, d2Phi, d2Theta);
 }
 
 float intersectsWithStar(float phi, float theta) {
@@ -96,13 +53,12 @@ void main() {
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
 
-  // holy shit it took me way too long to figure this part
   // uv are the coordinates of the pixel on the screen, which we're drawing with a quad tex.
   // transform these uv coordinates to the viewmatrix, which is what the camera is pointing to
   vec3 ray = u_camPos; 
   vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
 
-// 1. Define the orbital plane basis
+  // 1. Define the orbital plane basis
   vec3 e1 = normalize(ray); 
   vec3 e2 = normalize(rayDir - dot(rayDir, e1) * e1);
 
