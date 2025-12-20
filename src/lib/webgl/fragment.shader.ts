@@ -15,9 +15,6 @@ uniform sampler2D u_starTexture;
 
 // d2R equation (Orbital Plane form)
 // derived from geodesic eq with theta=pi/2, dtheta=0
-// d2R = - (Rs/2r^2) * f * (dt)^2 + (Rs/2r^2f) * dr^2 + r * f * dphi^2
-// Substitute dt = E/f:
-// d2R = - (Rs/2r^2) * (E*E/f) + (Rs/2r^2f) * dr^2 + r * f * dphi^2
 float calcD2r(float E, float f, float r, float dr, float dphi){    
     return -(u_eventHorizon / (2.0 * r * r)) * (E * E / f)
     + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
@@ -54,11 +51,9 @@ void main() {
   }
 
   // Initial State in Orbital Frame
-  float phi = 0.0; // Start at angle 0 in our defined plane
-  float dr = dot(rayDir, orbitalX); // Radial velocity
-  // Tangential velocity is dot(rayDir, orbitalY), which corresponds to r*dphi
-  // But we know r*r*dphi = h, so dphi = h / r^2.
-  
+  float phi = 0.0;
+  float dr = dot(rayDir, orbitalX);
+
   // Energy Calculation (Conserved)
   float f = 1.0 - u_eventHorizon / r;
   float E = sqrt(dr * dr + f * h * h / (r * r));
@@ -73,7 +68,7 @@ void main() {
       hitType = 1;
       break;
     }
-    ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // transform to cartesian coords
+    ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // cartesian coords
 
     if (r >= 1.0) {
       finalUv = vec2(
@@ -86,8 +81,8 @@ void main() {
     if(distance(u_starPos, ray) <= starRadius){
       vec3 relDir = normalize(ray - u_starPos);
       finalUv = vec2(
-          atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5,
-          asin(relDir.y) / PI + 0.5
+          atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, // u
+          asin(relDir.y) / PI + 0.5                    // v
       );
       hitType = 3;
       break;

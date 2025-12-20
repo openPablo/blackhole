@@ -13,9 +13,9 @@ export class Star {
 			0.4 + Math.random() * 0.6
 		);
 		this.pos = new Vector3().setFromSphericalCoords(
-			0.3 + Math.random() * 0.6, //radius
+			0.6, //radius
 			Math.PI / 2, //phi
-			Math.random() * Math.PI * 2 //theta
+			5.0 //theta
 		);
 	}
 }
