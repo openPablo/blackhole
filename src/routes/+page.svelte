@@ -13,7 +13,7 @@
 
 		const orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 0.01);
 		const renderer = new THREE.WebGLRenderer();
-		renderer.setSize(window.innerWidth / 1.5, window.innerHeight / 1.5);
+		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
 
 		const camera = new THREE.Camera();
@@ -35,7 +35,7 @@
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
 			u_stars: { value: Array.from({ length: 3 }, () => new Star()) },
-			u_spaceTexture: { value: new THREE.TextureLoader().load( 'src/lib/assets/space_texture.jpg' )}
+			u_spaceTexture: { value: new THREE.TextureLoader().load('src/lib/assets/space_texture.jpg') }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),

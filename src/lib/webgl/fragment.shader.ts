@@ -35,6 +35,7 @@ float calcD2r(float E, float f, float r, float dr, float dphi){
     return -(u_eventHorizon / (2.0 * r * r)) * (E * E / f)
     + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
     + r * f * dphi * dphi;
+}
 
 
 void main() {
@@ -47,7 +48,6 @@ void main() {
 
   // Every geodesic in Schwarzschild spacetime is planar.
   // We define a local coordinate system (X, Y) in the plane of the ray's motion.
-  // This avoids all polar singularities because we treat every ray as being on the "equator" of its own plane.
   float r = length(ray);
   vec3 orbitalX = normalize(ray); // Unit vector pointing to start position
   vec3 angularMomentumVec = cross(ray, rayDir);
@@ -73,38 +73,35 @@ void main() {
   // But we know r*r*dphi = h, so dphi = h / r^2.
   
   // Energy Calculation (Conserved)
-  // Null geodesic condition in plane: 0 = -f dt^2 + dr^2/f + r^2 dphi^2
-  // E = f dt.
-  // E = sqrt(dr^2 + f * r^2 * dphi^2)
-  // Substitute dphi = h/r^2: E = sqrt(dr^2 + f * h^2 / r^2)
   float f_start = 1.0 - u_eventHorizon / r;
   float E = sqrt(dr * dr + f_start * h * h / (r * r));
 
-  gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
-
+  vec2 finalUv = vec2 (0.0);
+  int hitType = 0;
+  vec3 starColor = vec3(0.0); 
   int i = 0;
   float step = 0.005;
-  while (i < 400 && r <= 1.1) {
+  while (i < 600 && r <= 1.1) {
     
     if (r <= u_eventHorizon * 1.01) {
-      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+      hitType = 1;
       break;
     }
     ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // transform to cartesian coords
 
     // map ray to texture uv
     if (r >= 1.0) {
-      gl_FragColor = texture2D(
-        u_spaceTexture,
-        vec2(
+      finalUv = vec2(
           atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
           asin(ray.y) / PI + 0.5                 // v
-        ));
+        );
+      hitType = 2;
       break;
     }
     int k = getIndexOfIntersectingStar(ray);
     if(k >= 0){
-      gl_FragColor = vec4(u_stars[k].color, 1.0);
+      starColor = u_stars[k].color;
+      hitType = 3;
       break;
     }
 
@@ -118,6 +115,16 @@ void main() {
     phi += dphi * step;
     
     i++;
+  }
+
+  if (hitType == 1) {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  } else if (hitType == 2) {
+    gl_FragColor = texture2D(u_spaceTexture, finalUv);
+  } else if (hitType == 3) {
+    gl_FragColor = vec4(starColor, 1.0);
+  } else {
+    gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
   }
 }
 `;
