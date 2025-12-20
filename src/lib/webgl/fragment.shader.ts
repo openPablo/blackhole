@@ -20,7 +20,15 @@ float calcD2r(float E, float f, float r, float dr, float dphi){
     + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
     + r * f * dphi * dphi;
 }
+vec4 sampleSeamless(sampler2D tex, vec2 uv) {
+    vec2 dX = dFdx(uv);
+    vec2 dY = dFdy(uv);
 
+    if (abs(dX.x) > 0.5) dX.x = fract(dX.x + 0.5) - 0.5;
+    if (abs(dY.x) > 0.5) dY.x = fract(dY.x + 0.5) - 0.5;
+
+    return textureGrad(tex, uv, dX, dY);
+}
 
 void main() {
 
@@ -101,9 +109,9 @@ void main() {
   if (hitType == 1) {
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   } else if (hitType == 2) {
-    gl_FragColor = texture2D(u_spaceTexture, finalUv);
+    gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
   } else if (hitType == 3) {
-    gl_FragColor = texture2D(u_starTexture, finalUv);
+    gl_FragColor = sampleSeamless(u_starTexture, finalUv);
   } else {
     gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
   }
