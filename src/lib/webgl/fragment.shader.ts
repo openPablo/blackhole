@@ -3,18 +3,18 @@ precision highp float;
 
 varying vec2 vUv;
 
-struct Planet {
+struct Celestial {
   float radius;  
   vec3 pos;
   vec3 color;  
 };
-const int nrOfPlanets = 20;
+const int nrOfStars = 20;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
-uniform Planet u_planets[nrOfPlanets];
+uniform Celestial u_stars[nrOfStars];
 
 
 vec3 getPolarCoords(vec3 pos){
@@ -34,18 +34,13 @@ vec3 getCartesianCoords(vec3 polar) {
   );
 }
 
-float intersectsWithStar(float phi, float theta) {
+int getIndexOfIntersectingStar(vec3 ray){
   for (int i = 0; i < nrOfStars; i++) {
-    float phi2 = u_stars[i].x;
-    float theta2 = u_stars[i].y;
-    float size = u_stars[i].z;
-
-    float distance = acos(sin(theta) * sin(theta2) * cos(phi-phi2) +  cos(theta) * cos(theta2) );
-    if (distance < size){
-      return u_stars[i].w;
+    if (distance(u_stars[i].pos, ray) <= u_stars[i].radius){
+      return i;
     }
   }
-  return 0.0;
+  return 0;
 }
 
 void main() {
@@ -76,7 +71,6 @@ void main() {
   float step = 0.05; 
   vec3 color = vec3(0.0, 0.0, 0.1);
 
-  // 3. Integration loop
   for (int i = 0; i < 400; i++) {
     // Schwarzschild geodesic equation for light: d2u/dphi2 + u = 1.5 * rs * u^2
     float d2u = -u + 1.5 * u_eventHorizon * u * u;
@@ -87,19 +81,17 @@ void main() {
 
     ray = (cos(phi) * e1 + sin(phi) * e2) * 1.0 / u;
 
-    if (u > 1.0 / u_eventHorizon) {
-      color = vec3(0.0); // Event Horizon
-      break;
-    }
     if (u <= 0.0) {
       color = vec3(0.1, 0.1, 0.2); // Escape to infinity
       break;
     }
-    if(polar.x >= 0.995 && polar.x <= 1.005) {
-      float red = intersectsWithStar(polar.y,polar.z);
-      if (red > 0.0){
-        color = vec3(0.9,0.9,red);
-      }
+    int k = getIndexOfIntersectingStar(ray);
+    if(k != 0){
+      color = u_stars[k].color;
+      break;
+    }
+    if (distance(ray, vec3(0,0,0))<= u_eventHorizon) {
+      color = vec3(1.0); // Event Horizon
       break;
     }
   }

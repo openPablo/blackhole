@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { BlackHole } from '$lib/celestials/BlackHole';
-	import { Planet } from '$lib/celestials/Planet';
+	import { Star } from '$lib/celestials/Star';
 	import * as THREE from 'three';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
@@ -34,7 +34,7 @@
 			u_eventHorizon: { value: blackHole.eventHorizon },
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
-			u_planets: { value: Array.from({ length: 20 }, () => new Planet()) }
+			u_stars: { value: Array.from({ length: 20 }, () => new Star()) }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
