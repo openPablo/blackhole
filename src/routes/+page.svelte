@@ -20,7 +20,7 @@
 		camera.position.set(0, 0.3, -0.9);
 		const controls = new OrbitControls(camera, renderer.domElement);
 		controls.autoRotate = true;
-		controls.autoRotateSpeed = 1.2;
+		controls.autoRotateSpeed = 2.0;
 		controls.target.set(0, 0, 0);
 		controls.enableDamping = true;
 		controls.dampingFactor = 0.05;
@@ -34,7 +34,8 @@
 			u_eventHorizon: { value: blackHole.eventHorizon },
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
-			u_stars: { value: Array.from({ length: 3 }, () => new Star()) }
+			u_stars: { value: Array.from({ length: 3 }, () => new Star()) },
+			u_spaceTexture: { value: new THREE.TextureLoader().load( 'src/lib/assets/space_texture.jpg' )}
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),

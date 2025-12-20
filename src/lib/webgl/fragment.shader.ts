@@ -1,6 +1,5 @@
 export const fragmentShader = /*glsl*/ `
 precision highp float;
-
 varying vec2 vUv;
 
 struct Celestial {
@@ -9,20 +8,14 @@ struct Celestial {
   vec3 color;  
 };
 const int nrOfStars = 3;
+const float PI = 3.1415926538;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
 uniform Celestial u_stars[nrOfStars];
-
-
-vec3 getPolarCoords(vec3 pos){
-	float r = length(pos);
-	float phi = atan(pos.y, pos.x);
-	float theta = acos(pos.z / r);
-  return vec3(r, phi, theta);
-}
+uniform sampler2D u_spaceTexture;
 
 int getIndexOfIntersectingStar(vec3 ray){
   for (int i = 0; i < nrOfStars; i++) {
@@ -39,10 +32,9 @@ int getIndexOfIntersectingStar(vec3 ray){
 // Substitute dt = E/f:
 // d2R = - (Rs/2r^2) * (E*E/f) + (Rs/2r^2f) * dr^2 + r * f * dphi^2
 float calcD2r(float E, float f, float r, float dr, float dphi){    
-    float term1 = -(u_eventHorizon / (2.0 * r * r)) * (E * E / f);
-    float term2 = (u_eventHorizon / (2.0 * r * r * f)) * dr * dr;
-    float term3 = r * f * dphi * dphi;
-    return term1 + term2 + term3;
+    return -(u_eventHorizon / (2.0 * r * r)) * (E * E / f)
+    + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
+    + r * f * dphi * dphi;
 }
 
 void main() {
@@ -89,20 +81,27 @@ void main() {
   float f_start = 1.0 - u_eventHorizon / r;
   float E = sqrt(dr * dr + f_start * h * h / (r * r));
 
-  vec3 color = vec3(0.0, 0.0, 0.1);
+  gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
 
   int i = 0;
   float step = 0.005;
   while (i < 400 && r <= 1.01) {
     
     if (r <= u_eventHorizon * 1.01) {
-      color = vec3(0.0, 0.0, 0.0);
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
       break;
     }
+    ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // transform to cartesian coords
 
-    int k = getIndexOfIntersectingStar(r * (cos(phi) * orbitalX + sin(phi) * orbitalY)); // transform to cartesian coords
+    if (r >= 0.996) {
+      float u = atan(ray.z, ray.x) / (2.0 * PI) + 0.5;
+      float v = asin(ray.y) / PI + 0.5;
+      gl_FragColor = texture2D(u_spaceTexture, vec2(u, v));
+      break;
+    }
+    int k = getIndexOfIntersectingStar(ray);
     if(k >= 0){
-      color = u_stars[k].color;
+      gl_FragColor = vec4(u_stars[k].color, 1.0);
       break;
     }
 
@@ -117,7 +116,5 @@ void main() {
     
     i++;
   }
-
-  gl_FragColor = vec4(color, 1.0);
 }
 `;
