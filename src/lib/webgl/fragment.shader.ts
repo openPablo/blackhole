@@ -2,19 +2,16 @@ export const fragmentShader = /*glsl*/ `
 precision highp float;
 varying vec2 vUv;
 
-struct Celestial {
-  float radius;  
-  vec3 pos;
-  vec3 color;  
-};
 const float PI = 3.141592653589793238462643;
+const float starRadius = 0.2;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
-uniform Celestial u_stars[1];
+uniform vec3 u_starPos;
 uniform sampler2D u_spaceTexture;
+uniform sampler2D u_starTexture;
 
 // d2R equation (Orbital Plane form)
 // derived from geodesic eq with theta=pi/2, dtheta=0
@@ -70,8 +67,8 @@ void main() {
   int hitType = 0;
   int i = 0;
   float step = 0.005;
+  float dphi = h / (r * r);
   while (i < 600 && r <= 1.1) {
-    
     if (r <= u_eventHorizon * 1.01) {
       hitType = 1;
       break;
@@ -86,16 +83,19 @@ void main() {
       hitType = 2;
       break;
     }
-    if(distance(u_stars[0].pos, ray) <= u_stars[0].radius){
+    if(distance(u_starPos, ray) <= starRadius){
+      vec3 relDir = normalize(ray - u_starPos);
+      finalUv = vec2(
+          atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5,
+          asin(relDir.y) / PI + 0.5
+      );
       hitType = 3;
       break;
     }
 
-    f = 1.0 - u_eventHorizon / r;    
-    // dphi is determined by conservation of angular momentum
-    float dphi = h / (r * r);
-    
-
+    f = 1.0 - u_eventHorizon / r;
+  
+    dphi = h / (r * r);    
     dr += calcD2r(E, f, r, dr, dphi) * step;
     r += dr * step;
     phi += dphi * step;
@@ -108,7 +108,7 @@ void main() {
   } else if (hitType == 2) {
     gl_FragColor = texture2D(u_spaceTexture, finalUv);
   } else if (hitType == 3) {
-    gl_FragColor = vec4(u_stars[0].color, 1.0);
+    gl_FragColor = texture2D(u_starTexture, finalUv);
   } else {
     gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
   }
