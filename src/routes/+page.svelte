@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { BlackHole } from '$lib/celestials/BlackHole';
+	import { Star } from '$lib/celestials/Star';
 	import * as THREE from 'three';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
@@ -16,7 +17,7 @@
 		container.appendChild(renderer.domElement);
 
 		const camera = new THREE.Camera();
-		camera.position.set(0, 0, -0.9);
+		camera.position.set(0, 0.3, -0.9);
 		const controls = new OrbitControls(camera, renderer.domElement);
 		controls.autoRotate = true;
 		controls.autoRotateSpeed = 1.2;
@@ -31,9 +32,9 @@
 		const uniforms = {
 			u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
 			u_eventHorizon: { value: blackHole.eventHorizon },
-			u_stars: { value: blackHole.generateConsellation(20) },
 			u_camPos: { value: new THREE.Vector3() },
-			u_viewMatrix: { value: new THREE.Matrix4() }
+			u_viewMatrix: { value: new THREE.Matrix4() },
+			u_stars: { value: Array.from({ length: 3 }, () => new Star()) }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),

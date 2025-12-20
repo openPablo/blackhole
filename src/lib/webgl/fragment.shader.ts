@@ -3,13 +3,19 @@ precision highp float;
 
 varying vec2 vUv;
 
+struct Celestial {
+  float radius;  
+  vec3 pos;
+  vec3 color;  
+};
+const int nrOfStars = 3;
+
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
+uniform Celestial u_stars[nrOfStars];
 
-const int nrOfStars = 20;
-uniform vec4 u_stars[nrOfStars];
 
 vec3 getPolarCoords(vec3 pos){
 	float r = length(pos);
@@ -18,18 +24,13 @@ vec3 getPolarCoords(vec3 pos){
   return vec3(r, phi, theta);
 }
 
-float intersectsWithStar(float phi, float theta) {
+int getIndexOfIntersectingStar(vec3 ray){
   for (int i = 0; i < nrOfStars; i++) {
-    float phi2 = u_stars[i].x;
-    float theta2 = u_stars[i].y;
-    float size = u_stars[i].z;
-
-    float distance = acos(sin(theta) * sin(theta2) * cos(phi-phi2) +  cos(theta) * cos(theta2) );
-    if (distance < size){
-      return u_stars[i].w;
+    if (distance(u_stars[i].pos, ray) <= u_stars[i].radius){
+      return i;
     }
   }
-  return 0.0;
+  return -1;
 }
 
 // d2R equation (Orbital Plane form)
@@ -98,15 +99,9 @@ void main() {
       color = vec3(0.0, 0.0, 0.0);
       break;
     }
-
-    if (r >= 0.995 && r <= 1.005) {
-      vec3 worldPos = r * (cos(phi) * orbitalX + sin(phi) * orbitalY);
-      vec3 worldPolar = getPolarCoords(worldPos);
-      
-      float red = intersectsWithStar(worldPolar.y, worldPolar.z);
-      if (red > 0.0) {
-        color = vec3(0.9, 0.9, red);
-      }
+    int k = getIndexOfIntersectingStar(r * (cos(phi) * orbitalX + sin(phi) * orbitalY)); // transform to cartesian coords
+    if(k >= 0){
+      color = u_stars[k].color;
       break;
     }
 
