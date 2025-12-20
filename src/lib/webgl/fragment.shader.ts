@@ -7,24 +7,14 @@ struct Celestial {
   vec3 pos;
   vec3 color;  
 };
-const int nrOfStars = 3;
 const float PI = 3.141592653589793238462643;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
 uniform vec3 u_camPos;
 uniform mat4 u_viewMatrix;
-uniform Celestial u_stars[nrOfStars];
+uniform Celestial u_stars[1];
 uniform sampler2D u_spaceTexture;
-
-int getIndexOfIntersectingStar(vec3 ray){
-  for (int i = 0; i < nrOfStars; i++) {
-    if (distance(u_stars[i].pos, ray) <= u_stars[i].radius){
-      return i;
-    }
-  }
-  return -1;
-}
 
 // d2R equation (Orbital Plane form)
 // derived from geodesic eq with theta=pi/2, dtheta=0
@@ -73,12 +63,11 @@ void main() {
   // But we know r*r*dphi = h, so dphi = h / r^2.
   
   // Energy Calculation (Conserved)
-  float f_start = 1.0 - u_eventHorizon / r;
-  float E = sqrt(dr * dr + f_start * h * h / (r * r));
+  float f = 1.0 - u_eventHorizon / r;
+  float E = sqrt(dr * dr + f * h * h / (r * r));
 
   vec2 finalUv = vec2 (0.0);
   int hitType = 0;
-  vec3 starColor = vec3(0.0); 
   int i = 0;
   float step = 0.005;
   while (i < 600 && r <= 1.1) {
@@ -89,7 +78,6 @@ void main() {
     }
     ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // transform to cartesian coords
 
-    // map ray to texture uv
     if (r >= 1.0) {
       finalUv = vec2(
           atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
@@ -98,14 +86,12 @@ void main() {
       hitType = 2;
       break;
     }
-    int k = getIndexOfIntersectingStar(ray);
-    if(k >= 0){
-      starColor = u_stars[k].color;
+    if(distance(u_stars[0].pos, ray) <= u_stars[0].radius){
       hitType = 3;
       break;
     }
 
-    float f = 1.0 - u_eventHorizon / r;    
+    f = 1.0 - u_eventHorizon / r;    
     // dphi is determined by conservation of angular momentum
     float dphi = h / (r * r);
     
@@ -122,7 +108,7 @@ void main() {
   } else if (hitType == 2) {
     gl_FragColor = texture2D(u_spaceTexture, finalUv);
   } else if (hitType == 3) {
-    gl_FragColor = vec4(starColor, 1.0);
+    gl_FragColor = vec4(u_stars[0].color, 1.0);
   } else {
     gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
   }

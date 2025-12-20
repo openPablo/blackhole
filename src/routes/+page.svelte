@@ -34,7 +34,7 @@
 			u_eventHorizon: { value: blackHole.eventHorizon },
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
-			u_stars: { value: Array.from({ length: 3 }, () => new Star()) },
+			u_stars: { value: Array.from({ length: 1 }, () => new Star()) },
 			u_spaceTexture: { value: new THREE.TextureLoader().load('src/lib/assets/space_texture.jpg') }
 		};
 		const quad = new THREE.Mesh(
