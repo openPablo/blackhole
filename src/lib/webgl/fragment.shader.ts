@@ -99,6 +99,7 @@ void main() {
       color = vec3(0.0, 0.0, 0.0);
       break;
     }
+
     int k = getIndexOfIntersectingStar(r * (cos(phi) * orbitalX + sin(phi) * orbitalY)); // transform to cartesian coords
     if(k >= 0){
       color = u_stars[k].color;
