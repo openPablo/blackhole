@@ -8,7 +8,7 @@ struct Celestial {
   vec3 color;  
 };
 const int nrOfStars = 3;
-const float PI = 3.1415926538;
+const float PI = 3.141592653589793238462643;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
@@ -35,9 +35,10 @@ float calcD2r(float E, float f, float r, float dr, float dphi){
     return -(u_eventHorizon / (2.0 * r * r)) * (E * E / f)
     + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
     + r * f * dphi * dphi;
-}
+
 
 void main() {
+
   vec2 uv = (vUv - 0.5) * 2.0;
   uv.x *= u_resolution.x / u_resolution.y;
 
@@ -47,10 +48,8 @@ void main() {
   // Every geodesic in Schwarzschild spacetime is planar.
   // We define a local coordinate system (X, Y) in the plane of the ray's motion.
   // This avoids all polar singularities because we treat every ray as being on the "equator" of its own plane.
-  
   float r = length(ray);
   vec3 orbitalX = normalize(ray); // Unit vector pointing to start position
-  
   vec3 angularMomentumVec = cross(ray, rayDir);
   float h = length(angularMomentumVec); // Angular momentum per unit mass (conserved)
   
@@ -85,7 +84,7 @@ void main() {
 
   int i = 0;
   float step = 0.005;
-  while (i < 400 && r <= 1.01) {
+  while (i < 400 && r <= 1.1) {
     
     if (r <= u_eventHorizon * 1.01) {
       gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
@@ -93,10 +92,14 @@ void main() {
     }
     ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // transform to cartesian coords
 
-    if (r >= 0.996) {
-      float u = atan(ray.z, ray.x) / (2.0 * PI) + 0.5;
-      float v = asin(ray.y) / PI + 0.5;
-      gl_FragColor = texture2D(u_spaceTexture, vec2(u, v));
+    // map ray to texture uv
+    if (r >= 1.0) {
+      gl_FragColor = texture2D(
+        u_spaceTexture,
+        vec2(
+          atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
+          asin(ray.y) / PI + 0.5                 // v
+        ));
       break;
     }
     int k = getIndexOfIntersectingStar(ray);
