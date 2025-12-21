@@ -35,8 +35,8 @@
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
 			u_starPos: { value: new Star().pos },
-			u_spaceTexture: { value: new THREE.TextureLoader().load('src/lib/assets/space.png') },
-			u_starTexture: { value: new THREE.TextureLoader().load('src/lib/assets/star1.png') }
+			u_spaceTexture: { value: new THREE.TextureLoader().load('space.png') },
+			u_starTexture: { value: new THREE.TextureLoader().load('star1.png') }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
