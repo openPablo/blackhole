@@ -28,10 +28,6 @@ vec4 sampleSeamless(sampler2D tex, vec2 uv) {
   if (abs(dY.x) > 0.5) dY.x = fract(dY.x + 0.5) - 0.5;
   return textureGrad(tex, uv, dX, dY);
 }
-vec4 blend(vec4 top, vec4 bottom){
-  return vec4(top.rgb * top.a + bottom.rgb * (1.0 - top.a), 1.0);
-}
-
 void main() {
 
   vec2 uv = (vUv - 0.5) * 2.0;
@@ -69,7 +65,6 @@ void main() {
   float E = sqrt(dr * dr + f * h * h / (r * r));
 
   vec2 finalUv = vec2 (0.0);
-  vec4 accretionColor = vec4(0.0);
   int hitType = 0;
 
   int i = 0;
@@ -81,9 +76,7 @@ void main() {
       hitType = 1;
       break;
     }
-    if (ray.y <= accretionThickness && ray.y >= -accretionThickness && r <= u_eventHorizon +0.3){
-      accretionColor = vec4(0.7, r*3.0 , 0.0, max(1.0 - (r * 3.5), 0.0)); 
-    }
+
     if (r >= 1.0) {
       finalUv = vec2(
           atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
@@ -114,11 +107,11 @@ void main() {
 
   // setting the frag color outside the while loop solved a visual bug, by allowing the GPU to optimize
   if (hitType == 1) {
-    gl_FragColor = blend(accretionColor, vec4(0.0,0.0,0.0,1.0));
+    gl_FragColor = vec4(0.0,0.0,0.0,1.0);
   } else if (hitType == 2) {
-    gl_FragColor = blend(accretionColor, sampleSeamless(u_spaceTexture, finalUv));
+    gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
   } else if (hitType == 3) {
-    gl_FragColor = blend(accretionColor, sampleSeamless(u_starTexture, finalUv));
+    gl_FragColor = sampleSeamless(u_starTexture, finalUv);
   }
 }
 `;
