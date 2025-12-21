@@ -3,7 +3,8 @@ precision highp float;
 varying vec2 vUv;
 
 const float PI = 3.141592653589793238462643;
-const float starRadius = 0.2;
+const float sunRadius = 0.2;
+const float accretionThickness = 0.004;
 
 uniform float u_eventHorizon;
 uniform vec2 u_resolution;
@@ -27,9 +28,8 @@ vec4 sampleSeamless(sampler2D tex, vec2 uv) {
   if (abs(dY.x) > 0.5) dY.x = fract(dY.x + 0.5) - 0.5;
   return textureGrad(tex, uv, dX, dY);
 }
-
-vec4 accretionGradient(float r){
-  return vec4(0.5, r*2.0 , 0.0, 1.0);
+vec4 blend(vec4 top, vec4 bottom){
+  return vec4(top.rgb * top.a + bottom.rgb * (1.0 - top.a), 1.0);
 }
 
 void main() {
@@ -69,10 +69,11 @@ void main() {
   float E = sqrt(dr * dr + f * h * h / (r * r));
 
   vec2 finalUv = vec2 (0.0);
+  vec4 accretionColor = vec4(0.0);
   int hitType = 0;
+
   int i = 0;
   float step = 0.005;
-  
   while (i < 600 && r <= 1.1) {
     ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // cartesian coords
 
@@ -80,9 +81,8 @@ void main() {
       hitType = 1;
       break;
     }
-    if (ray.y == 0.0 && r <= u_eventHorizon * +0.1){
-      hitType = 4;
-      break;
+    if (ray.y <= accretionThickness && ray.y >= -accretionThickness && r <= u_eventHorizon +0.3){
+      accretionColor = vec4(0.7, r*3.0 , 0.0, max(1.0 - (r * 3.5), 0.0)); 
     }
     if (r >= 1.0) {
       finalUv = vec2(
@@ -92,7 +92,7 @@ void main() {
       hitType = 2;
       break;
     }
-    if(r >= 0.35 && r<= 0.85 && distance(u_starPos, ray) <= starRadius){
+    if(r >= 0.35 && r<= 0.85 && distance(u_starPos, ray) <= sunRadius){
       vec3 relDir = normalize(ray - u_starPos);
       finalUv = vec2(
           atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, // u
@@ -114,15 +114,11 @@ void main() {
 
   // setting the frag color outside the while loop solved a visual bug, by allowing the GPU to optimize
   if (hitType == 1) {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = blend(accretionColor, vec4(0.0,0.0,0.0,1.0));
   } else if (hitType == 2) {
-    gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
+    gl_FragColor = blend(accretionColor, sampleSeamless(u_spaceTexture, finalUv));
   } else if (hitType == 3) {
-    gl_FragColor = sampleSeamless(u_starTexture, finalUv);
-  } else if (hitType == 4) {
-    gl_FragColor = accretionGradient(r);
-  } else {
-    gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
+    gl_FragColor = blend(accretionColor, sampleSeamless(u_starTexture, finalUv));
   }
 }
 `;
