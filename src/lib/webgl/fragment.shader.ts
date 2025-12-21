@@ -21,13 +21,15 @@ float calcD2r(float E, float f, float r, float dr, float dphi){
     + r * f * dphi * dphi;
 }
 vec4 sampleSeamless(sampler2D tex, vec2 uv) {
-    vec2 dX = dFdx(uv);
-    vec2 dY = dFdy(uv);
+  vec2 dX = dFdx(uv);
+  vec2 dY = dFdy(uv);
+  if (abs(dX.x) > 0.5) dX.x = fract(dX.x + 0.5) - 0.5;
+  if (abs(dY.x) > 0.5) dY.x = fract(dY.x + 0.5) - 0.5;
+  return textureGrad(tex, uv, dX, dY);
+}
 
-    if (abs(dX.x) > 0.5) dX.x = fract(dX.x + 0.5) - 0.5;
-    if (abs(dY.x) > 0.5) dY.x = fract(dY.x + 0.5) - 0.5;
-
-    return textureGrad(tex, uv, dX, dY);
+vec4 accretionGradient(float r){
+  return vec4(0.5, r*2.0 , 0.0, 1.0);
 }
 
 void main() {
@@ -37,10 +39,10 @@ void main() {
 
   vec3 ray = u_camPos; 
   vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
-
-  // Every geodesic in Schwarzschild spacetime is planar.
-  // We define a local coordinate system (X, Y) in the plane of the ray's motion.
+ 
   float r = length(ray);
+  float phi = 0.0;
+ // We define a local coordinate system (X, Y) in the plane of the ray's motion.
   vec3 orbitalX = normalize(ray); // Unit vector pointing to start position
   vec3 angularMomentumVec = cross(ray, rayDir);
   float h = length(angularMomentumVec); // Angular momentum per unit mass (conserved)
@@ -59,8 +61,8 @@ void main() {
   }
 
   // Initial State in Orbital Frame
-  float phi = 0.0;
   float dr = dot(rayDir, orbitalX);
+  float dphi = h / (r * r);
 
   // Energy Calculation (Conserved)
   float f = 1.0 - u_eventHorizon / r;
@@ -70,14 +72,18 @@ void main() {
   int hitType = 0;
   int i = 0;
   float step = 0.005;
-  float dphi = h / (r * r);
+  
   while (i < 600 && r <= 1.1) {
-    if (r <= u_eventHorizon * 1.01) {
+    ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // cartesian coords
+
+    if (r <= u_eventHorizon * 1.001) {
       hitType = 1;
       break;
     }
-    ray = r * (cos(phi) * orbitalX + sin(phi) * orbitalY); // cartesian coords
-
+    if (ray.y == 0.0 && r <= u_eventHorizon * +0.1){
+      hitType = 4;
+      break;
+    }
     if (r >= 1.0) {
       finalUv = vec2(
           atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
@@ -86,7 +92,7 @@ void main() {
       hitType = 2;
       break;
     }
-    if(distance(u_starPos, ray) <= starRadius){
+    if(r >= 0.35 && r<= 0.85 && distance(u_starPos, ray) <= starRadius){
       vec3 relDir = normalize(ray - u_starPos);
       finalUv = vec2(
           atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, // u
@@ -106,12 +112,15 @@ void main() {
     i++;
   }
 
+  // setting the frag color outside the while loop solved a visual bug, by allowing the GPU to optimize
   if (hitType == 1) {
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   } else if (hitType == 2) {
     gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
   } else if (hitType == 3) {
     gl_FragColor = sampleSeamless(u_starTexture, finalUv);
+  } else if (hitType == 4) {
+    gl_FragColor = accretionGradient(r);
   } else {
     gl_FragColor = vec4(0.0, 0.0, 0.1, 1.0);
   }
