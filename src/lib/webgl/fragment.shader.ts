@@ -33,8 +33,9 @@ void main() {
 
   vec3 ray = u_camPos; 
   vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
- 
-  vec2 polar = vec2(0.0, length(ray)); // x: phi, y: r
+
+  vec2 polar = vec2(length(ray), 0.0); //x = r, y = phi
+
   vec3 orbitalX = normalize(ray);
   vec3 angularMomentumVec = cross(ray, rayDir);
   float h = length(angularMomentumVec);
@@ -47,39 +48,40 @@ void main() {
     orbitalY = cross(normalize(angularMomentumVec), orbitalX);
   }
 
-  vec2 dPolar = vec2(h / (polar.y * polar.y), dot(rayDir, orbitalX)); // x: dphi, y: dr
+  vec2 dPolar = vec2(dot(rayDir, orbitalX), h / (polar.x * polar.x)); // dPolar: x = dr, y = dphi
 
-  float f = 1.0 - u_eventHorizon / polar.y;
-  float E = sqrt(dPolar.y * dPolar.y + f * h * h / (polar.y * polar.y));
+  float f = 1.0 - u_eventHorizon / polar.x;
+  float E = sqrt(dPolar.x * dPolar.x + f * h * h / (polar.x * polar.x));
 
   vec2 finalUv = vec2(0.0);
   int hitType = 0;
   float step = 0.005;
 
   for (int i = 0; i < 600; i++) {
-    ray = polar.y * (cos(polar.x) * orbitalX + sin(polar.x) * orbitalY); // back to cartesian
+    ray = polar.x * (cos(polar.y) * orbitalX + sin(polar.y) * orbitalY); // back to cartesion
 
-    if (polar.y <= u_eventHorizon * 1.001) {
+    if (polar.x <= u_eventHorizon * 1.001) {
       hitType = 1;
       break;
     }
 
-    if (polar.y >= 1.0) {
+    if (polar.x >= 1.0) {
       finalUv = vec2(atan(ray.z, ray.x) / (2.0 * PI) + 0.5, asin(ray.y) / PI + 0.5);
       hitType = 2;
       break;
     }
 
-    if (polar.y >= 0.35 && polar.y <= 0.85 && distance(u_starPos, ray) <= sunRadius) {
+    if (polar.x >= 0.35 && polar.x <= 0.85 && distance(u_starPos, ray) <= sunRadius) {
       vec3 relDir = normalize(ray - u_starPos);
       finalUv = vec2(atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, asin(relDir.y) / PI + 0.5);
       hitType = 3;
       break;
     }
 
-    f = 1.0 - u_eventHorizon / polar.y;
-    dPolar.x = h / (polar.y * polar.y);    
-    dPolar.y += calcD2r(E, f, polar.y, dPolar.y, dPolar.x) * step;
+    f = 1.0 - u_eventHorizon / polar.x;
+    dPolar.y = h / (polar.x * polar.x);    
+    dPolar.x += calcD2r(E, f, polar.x, dPolar.x, dPolar.y) * step;
+    
     polar += dPolar * step;
   }
 
