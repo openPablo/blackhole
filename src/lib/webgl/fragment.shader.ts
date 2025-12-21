@@ -31,7 +31,9 @@ vec4 sampleSeamless(sampler2D tex, vec2 uv) {
 vec4 blend(vec4 top, vec4 bottom){
   return vec4(top.rgb * top.a + bottom.rgb * (1.0 - top.a), 1.0);
 }
-
+float hash(float n) { 
+    return fract(sin(n) * 43758.5453123); 
+}
 void main() {
 
   vec2 uv = (vUv - 0.5) * 2.0;
@@ -81,9 +83,20 @@ void main() {
       hitType = 1;
       break;
     }
-    if (ray.y <= accretionThickness && ray.y >= -accretionThickness && r <= u_eventHorizon +0.3){
-      accretionColor = vec4(0.7, r*3.0 , 0.0, max(1.0 - (r * 3.5), 0.0)); 
-    }
+if (abs(ray.y) <= accretionThickness && r <= u_eventHorizon + 0.3) {
+    float rnd = hash(floor(r * 50.0));
+    float wave = sin(r * 320.0 + rnd * 6.28);
+    
+    // Inline color and gap logic
+    float shift = clamp(smoothstep(u_eventHorizon, u_eventHorizon + 0.3, r) + mix(0.4, 0.0, wave * 0.5 + 0.5), 0.0, 1.0);
+    float mask = smoothstep(u_eventHorizon + 0.005, u_eventHorizon + 0.1, r);
+    float thres = mix(-0.5, 0.1, rnd);
+    float gaps = smoothstep(thres, thres + 0.08, mix(1.0, wave, mask));
+
+    // Density and final assignment
+    float d = pow(max(1.0 - (r - u_eventHorizon) / 0.3, 0.0), 3.0) * gaps;
+    accretionColor = vec4(mix(vec3(2, 2.5, 5), vec3(0.02, 0.05, 0.2), shift), clamp(d, 0.0, 1.0));
+}
     if (r >= 1.0) {
       finalUv = vec2(
           atan(ray.z, ray.x) / (2.0 * PI) + 0.5, // u
