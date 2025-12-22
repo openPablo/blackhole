@@ -5,10 +5,25 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
-  
+	import './loading.css';
+
 	let container: HTMLDivElement;
+	let progress = 0;
+	let loading = true;
 
 	onMount(() => {
+		const manager = new THREE.LoadingManager();
+		manager.onProgress = (url, itemsLoaded, itemsTotal) => {
+			progress = (itemsLoaded / itemsTotal) * 100;
+		};
+		manager.onLoad = () => {
+			progress = 100;
+			setTimeout(() => {
+				loading = false;
+			}, 500);
+		};
+
+		const textureLoader = new THREE.TextureLoader(manager);
 		const scene = new THREE.Scene();
 		const renderer = new THREE.WebGLRenderer();
 
@@ -34,8 +49,8 @@
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
 			u_starPos: { value: blackHole.orbitalSunPos },
-			u_spaceTexture: { value: new THREE.TextureLoader().load('space.png') },
-			u_starTexture: { value: new THREE.TextureLoader().load('star1.png') }
+			u_spaceTexture: { value: textureLoader.load('space.png') },
+			u_starTexture: { value: textureLoader.load('star1.png') }
 		};
 		const quad = new THREE.Mesh(
 			new THREE.PlaneGeometry(2, 2),
@@ -65,3 +80,13 @@
 </script>
 
 <div role="presentation" bind:this={container} class="w-full h-full fixed top-0 left-0"></div>
+
+{#if loading}
+	<div class="loading-overlay">
+		<div class="loading-text">Loading...</div>
+		<div class="progress-bar">
+			<div class="progress-fill" style="width: {progress}%"></div>
+		</div>
+	</div>
+{/if}
+
