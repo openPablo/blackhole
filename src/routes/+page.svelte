@@ -5,11 +5,12 @@
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
-	import './loading.css';
+	import './styles.css';
 
 	let container: HTMLDivElement;
 	let progress = 0;
 	let loading = true;
+	let showInfo = false;
 
 	onMount(() => {
 		const manager = new THREE.LoadingManager();
@@ -81,6 +82,85 @@
 
 <div role="presentation" bind:this={container} class="w-full h-full fixed top-0 left-0"></div>
 
+<div class="ui-layer">
+	<div class="buttons">
+		<a
+			href="https://github.com/openpablo/blackhole"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="btn github-btn"
+			aria-label="GitHub"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				width="24"
+				height="24"
+				stroke="currentColor"
+				stroke-width="2"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				><path
+					d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+				></path></svg
+			>
+		</a>
+		<button onclick={() => (showInfo = true)} class="btn info-btn" aria-label="Info">
+			<svg
+				viewBox="0 0 24 24"
+				width="24"
+				height="24"
+				stroke="currentColor"
+				stroke-width="2"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line
+					x1="12"
+					y1="8"
+					x2="12.01"
+					y2="8"
+				></line></svg
+			>
+		</button>
+	</div>
+
+	{#if showInfo}
+		<div
+			class="modal-backdrop"
+			onclick={(e) => {
+				if (e.target === e.currentTarget) showInfo = false;
+			}}
+			role="button"
+			tabindex="0"
+			onkeydown={(e) => e.key === 'Escape' && (showInfo = false)}
+		>
+			<div class="modal" role="dialog" aria-modal="true" tabindex="-1">
+				<h2>WebGL Blackhole</h2>
+				<p>
+					<strong>Simulated Mass:</strong> 20,000 Sol<br />
+				</p>
+
+				<p>Raytraces every pixel on your screen like it's a ray of light.</p>
+				<p>
+					Uses Schwarzschild's geodesics to calculate how the light rays are affected by the
+					blackhole's gravity.
+				</p>
+				<p>
+					Raytracing every pixel is very resource intensive, that's why I wrote this in a WebGL
+					fragment shader.
+				</p>
+				<p>Fragment shaders are optimized for GPU computing, and use GLSL, a C like language.</p>
+				<p>
+					This scene is optimized to run smoothly on a mobile phone or a laptop with integrated
+					graphics.
+				</p>
+				<button class="close-btn" onclick={() => (showInfo = false)}>Close</button>
+			</div>
+		</div>
+	{/if}
+</div>
+
 {#if loading}
 	<div class="loading-overlay">
 		<div class="loading-text">Loading...</div>
@@ -89,4 +169,3 @@
 		</div>
 	</div>
 {/if}
-

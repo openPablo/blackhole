@@ -7,13 +7,12 @@ npm install
 npm run dev
 ```
 
-## Inspiration
+## What is this
 
-I was inspired by this super interesting youtube video, in which the OP created a blackhole simulation using C++ and openGL.
-https://www.youtube.com/watch?v=8-B6ryuBkCM (great channel!)
+Blackhole simulation in WebGL
 
-
-So I decided to give it a go and try to implement a blackhole efficient enough, that it could be ran in the browser.
-
-I learned Threejs/webGL through this exercise :).
-
+- Raytraces every pixel on your screen like it's a ray of light.
+- Uses Schwarzschild's geodesics to calculate how the light rays are affected by the blackhole's gravity
+- Raytracing every pixel is very resource intensive, that's why I wrote this in a WebGL fragment shader.
+- Fragment shaders are optimized for GPU computing, and use GLSL, a C like language.
+- This scene is optimized to run smoothly on a mobile phone or a laptop with integrated graphics.
