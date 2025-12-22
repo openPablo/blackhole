@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { BlackHole } from '$lib/celestials/BlackHole';
-	import { Star } from '$lib/celestials/Star';
 	import * as THREE from 'three';
+	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 	import { fragmentShader } from '$lib/webgl/fragment.shader';
 	import { vertexShader } from '$lib/webgl/vertex.shader';
-	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-
+  
 	let container: HTMLDivElement;
+
 	onMount(() => {
 		const scene = new THREE.Scene();
+		const renderer = new THREE.WebGLRenderer();
 
 		const orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 0.01);
-		const renderer = new THREE.WebGLRenderer();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		container.appendChild(renderer.domElement);
 
@@ -21,7 +21,6 @@
 		const controls = new OrbitControls(camera, renderer.domElement);
 		controls.autoRotate = true;
 		controls.autoRotateSpeed = 2.0;
-		controls.target.set(0, 0, 0);
 		controls.enableDamping = true;
 		controls.dampingFactor = 0.05;
 
@@ -34,7 +33,7 @@
 			u_eventHorizon: { value: blackHole.eventHorizon },
 			u_camPos: { value: new THREE.Vector3() },
 			u_viewMatrix: { value: new THREE.Matrix4() },
-			u_starPos: { value: new Star().pos },
+			u_starPos: { value: blackHole.orbitalSunPos },
 			u_spaceTexture: { value: new THREE.TextureLoader().load('space.png') },
 			u_starTexture: { value: new THREE.TextureLoader().load('star1.png') }
 		};
@@ -47,7 +46,11 @@
 			})
 		);
 		scene.add(quad);
-
+		const handleResize = () => {
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+		};
+		window.addEventListener('resize', handleResize);
 		function animate() {
 			controls.update();
 			camera.updateMatrixWorld();

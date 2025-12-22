@@ -18,7 +18,18 @@ float calcD2r(float E, float f, float r, float dr, float dphi){
     + (u_eventHorizon / (2.0 * r * r * f)) * dr * dr
     + r * f * dphi * dphi;
 }
-
+vec3 calcOrbitalY(float h, vec3 angularMomentumVec, vec3 orbitalX){
+  vec3 orbitalY;
+  if (h < 1e-6) {
+    orbitalY = vec3(0.0, 1.0, 0.0); 
+    if (abs(dot(orbitalX, orbitalY)) > 0.99) {
+      orbitalY = vec3(0.0, 0.0, 1.0);
+    }
+  } else {
+    orbitalY = cross(normalize(angularMomentumVec), orbitalX);
+  }
+  return orbitalY;
+}
 vec4 sampleSeamless(sampler2D tex, vec2 uv) {
   vec2 dX = dFdx(uv);
   vec2 dY = dFdy(uv);
@@ -32,21 +43,15 @@ void main() {
   uv.x *= u_resolution.x / u_resolution.y;
 
   vec3 ray = u_camPos; 
-  vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0));
+  vec3 rayDir = normalize(mat3(u_viewMatrix) * vec3(uv, -1.0)); // pixel on the screen that we're gonna calc gets transformed to camera pos
 
   vec2 polar = vec2(length(ray), 0.0); //x = r, y = phi
 
-  vec3 orbitalX = normalize(ray);
   vec3 angularMomentumVec = cross(ray, rayDir);
   float h = length(angularMomentumVec);
   
-  vec3 orbitalY;
-  if (h < 1e-6) {
-    orbitalY = vec3(0.0, 1.0, 0.0); 
-    if (abs(dot(orbitalX, orbitalY)) > 0.99) orbitalY = vec3(0.0, 0.0, 1.0);
-  } else {
-    orbitalY = cross(normalize(angularMomentumVec), orbitalX);
-  }
+  vec3 orbitalX = normalize(ray);
+  vec3 orbitalY = calcOrbitalY(h, angularMomentumVec, orbitalX);
 
   vec2 dPolar = vec2(dot(rayDir, orbitalX), h / (polar.x * polar.x)); // dPolar: x = dr, y = dphi
 
@@ -54,11 +59,12 @@ void main() {
   float E = sqrt(dPolar.x * dPolar.x + f * h * h / (polar.x * polar.x));
 
   vec2 finalUv = vec2(0.0);
+  vec3 relDir;
   int hitType = 0;
   float step = 0.005;
 
   for (int i = 0; i < 600; i++) {
-    ray = polar.x * (cos(polar.y) * orbitalX + sin(polar.y) * orbitalY); // back to cartesion
+    ray = polar.x * (cos(polar.y) * orbitalX + sin(polar.y) * orbitalY); // back to cartesian
 
     if (polar.x <= u_eventHorizon * 1.001) {
       hitType = 1;
@@ -71,8 +77,8 @@ void main() {
       break;
     }
 
-    if (polar.x >= 0.35 && polar.x <= 0.85 && distance(u_starPos, ray) <= sunRadius) {
-      vec3 relDir = normalize(ray - u_starPos);
+    if (polar.x >= 0.35 && polar.x <= 0.85 && distance(u_starPos, ray) <= sunRadius) { //optimized so it doesnt check position of the sun for the whole ray
+      relDir = normalize(ray - u_starPos);
       finalUv = vec2(atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, asin(relDir.y) / PI + 0.5);
       hitType = 3;
       break;
@@ -85,7 +91,7 @@ void main() {
     polar += dPolar * step;
   }
 
-  if (hitType == 1) {
+  if (hitType == 1) { // Setting frag color outside a while loop allows gpu to optimize, solves Moire pattern bug
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   } else if (hitType == 2) {
     gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
