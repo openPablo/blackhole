@@ -30,6 +30,10 @@ vec3 calcOrbitalY(float h, vec3 angularMomentumVec, vec3 orbitalX){
   }
   return orbitalY;
 }
+vec3 getCartesian(vec2 polar, vec3 orbitalX, vec3 orbitalY){
+  return polar.x * (cos(polar.y) * orbitalX + sin(polar.y) * orbitalY);
+}
+
 vec4 sampleSeamless(sampler2D tex, vec2 uv) {
   vec2 dX = dFdx(uv);
   vec2 dY = dFdy(uv);
@@ -59,12 +63,10 @@ void main() {
   float E = sqrt(dPolar.x * dPolar.x + f * h * h / (polar.x * polar.x));
 
   vec2 finalUv = vec2(0.0);
-  vec3 relDir;
   int hitType = 0;
   float step = 0.005;
 
   for (int i = 0; i < 600; i++) {
-    ray = polar.x * (cos(polar.y) * orbitalX + sin(polar.y) * orbitalY); // back to cartesian
 
     if (polar.x <= u_eventHorizon * 1.001) {
       hitType = 1;
@@ -72,14 +74,15 @@ void main() {
     }
 
     if (polar.x >= 1.0) {
-      finalUv = vec2(atan(ray.z, ray.x) / (2.0 * PI) + 0.5, asin(ray.y) / PI + 0.5);
+      ray = getCartesian(polar, orbitalX, orbitalY);
+      finalUv = vec2(atan(ray.z, ray.x) / (2.0 * PI) + 0.5, asin(ray.y) / PI + 0.5);    // Calc where on the space sphere the rays land
       hitType = 2;
       break;
     }
 
-    if (polar.x >= 0.35 && polar.x <= 0.85 && distance(u_starPos, ray) <= sunRadius) { //optimized so it doesnt check position of the sun for the whole ray
-      relDir = normalize(ray - u_starPos);
-      finalUv = vec2(atan(relDir.z, relDir.x) / (2.0 * PI) + 0.5, asin(relDir.y) / PI + 0.5);
+    if (polar.x >= 0.35 && polar.x <= 0.85 && distance(u_starPos, ray) <= sunRadius) {  //optimized so it doesnt check position of the sun for the whole ray
+      ray = normalize(getCartesian(polar, orbitalX, orbitalY) - u_starPos);             // Calc where on the sun the rays hit
+      finalUv = vec2(atan(ray.z, ray.x) / (2.0 * PI) + 0.5, asin(ray.y) / PI + 0.5);
       hitType = 3;
       break;
     }
@@ -91,7 +94,7 @@ void main() {
     polar += dPolar * step;
   }
 
-  if (hitType == 1) { // Setting frag color outside a while loop allows gpu to optimize, solves Moire pattern bug
+  if (hitType == 1) { // Setting frag color outside a while loop allows gpu to optimize, solves a bug which produced ugly artifacts
     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   } else if (hitType == 2) {
     gl_FragColor = sampleSeamless(u_spaceTexture, finalUv);
