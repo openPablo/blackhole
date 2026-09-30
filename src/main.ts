@@ -54,8 +54,8 @@ const uniforms = {
 	u_camPos: { value: new THREE.Vector3() },
 	u_viewMatrix: { value: new THREE.Matrix4() },
 	u_starPos: { value: blackHole.orbitalSunPos },
-	u_spaceTexture: { value: textureLoader.load('space.png') },
-	u_starTexture: { value: textureLoader.load('star1.png') }
+	u_spaceTexture: { value: textureLoader.load('space.jpeg') },
+	u_starTexture: { value: textureLoader.load('star1.jpeg') }
 };
 const quad = new THREE.Mesh(
 	new THREE.PlaneGeometry(2, 2),
