@@ -1,3 +1,21 @@
+html,
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	overflow: hidden;
+	background: black;
+}
+
+#container {
+	position: fixed;
+	inset: 0;
+}
+
+[hidden] {
+	display: none !important;
+}
+
 .loading-overlay {
 	position: fixed;
 	top: 0;
